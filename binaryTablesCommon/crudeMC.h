@@ -1,3 +1,0 @@
-#ifndef CRUDE_MC_HEADER_GUARD
-#define CRUDE_MC_HEADER_GUARD
-#endif

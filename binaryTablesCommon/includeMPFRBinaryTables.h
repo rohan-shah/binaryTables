@@ -6,5 +6,6 @@
 namespace binaryTables
 {
 	typedef boost::multiprecision::mpfr_float mpfr_class;
+	typedef boost::multiprecision::mpz_int mpz_class;
 }
 #endif 

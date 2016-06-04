@@ -14,3 +14,4 @@ Collate:
 	'onLoad.R'
 	'Rcpp_exceptions.R'
 	'setDefaultPrec.R'
+	'crudeMC.R'

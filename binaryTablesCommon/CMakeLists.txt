@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
-set(CppFiles crudeMC.cpp)
-set(HeaderFiles crudeMC.h includeMPFRBinaryTables.h)
+set(CppFiles crudeMCImpl.cpp GayleRyserTest.cpp problem.cpp)
+set(HeaderFiles crudeMCImpl.h includeMPFRBinaryTables.h GayleRyserTest.h problem.h)
 
 add_library(binaryTablesCommon STATIC ${CppFiles} ${HeaderFiles})
 target_include_directories(binaryTablesCommon PUBLIC ${Boost_INCLUDE_DIRS})
