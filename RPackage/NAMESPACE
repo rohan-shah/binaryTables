@@ -1,0 +1,5 @@
+export(crudeMC)
+export(approximateZeroVariance)
+export(approximateZeroVarianceWOR)
+export(exhaustiveSearch)
+export(exhaustiveProbability)

@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.1)
+set(CppFiles crudeMC.cpp)
+set(HeaderFiles crudeMC.h includeMPFRBinaryTables.h)
+
+add_library(binaryTablesCommon STATIC ${CppFiles} ${HeaderFiles})
+target_include_directories(binaryTablesCommon PUBLIC ${Boost_INCLUDE_DIRS})
+target_include_directories(binaryTablesCommon PUBLIC ${PROJECT_SOURCE_DIR}/binaryTablesCommon)
+target_link_libraries(binaryTablesCommon INTERFACE ${Boost_LIBRARIES})
+target_link_libraries(binaryTablesCommon PUBLIC sampling)
+target_compile_definitions(binaryTablesCommon PUBLIC BOOST_ALL_NO_LIB BOOST_ALL_DYN_LINK)
+
+if(WIN32)
+	target_link_libraries(binaryTablesCommon PUBLIC mpfr mpir)
+	set_target_properties(binaryTablesCommon PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/x64/ PDB_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/x64/)
+else()
+	target_link_libraries(binaryTablesCommon PUBLIC dl mpfr)
+	target_compile_features(binaryTablesCommon PUBLIC cxx_rvalue_references)
+	#Adding the binary directory because that's where the generated flex/bison code goes
+	target_include_directories(binaryTablesCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+	target_compile_options(binaryTablesCommon PUBLIC "-fPIC")
+endif()
