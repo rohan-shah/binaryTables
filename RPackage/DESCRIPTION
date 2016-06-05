@@ -15,3 +15,4 @@ Collate:
 	'Rcpp_exceptions.R'
 	'setDefaultPrec.R'
 	'crudeMC.R'
+	'exhaustiveSearch.R'

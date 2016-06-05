@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
-set(HeaderFiles setDefaultPrec.h crudeMC.h)
-set(CppFiles setDefaultPrec.cpp crudeMC.cpp register.cpp)
+set(HeaderFiles setDefaultPrec.h crudeMC.h exhaustiveSearch.h)
+set(CppFiles setDefaultPrec.cpp crudeMC.cpp register.cpp exhaustiveSearch.cpp)
 add_library(binaryTablesRPackage SHARED ${CppFiles} ${HeaderFiles})
 target_link_libraries(binaryTablesRPackage PUBLIC binaryTablesCommon Rcpp)
 set_target_properties(binaryTablesRPackage PROPERTIES OUTPUT_NAME "binaryTables")
