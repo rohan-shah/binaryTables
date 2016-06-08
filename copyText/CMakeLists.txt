@@ -6,7 +6,7 @@ else()
 	add_custom_target(copyText ALL)
 endif()
 
-set(RFiles R/onLoad.R R/crudeMC.R R/setDefaultPrec.R R/exhaustiveSearch.R)
+set(RFiles R/onLoad.R R/crudeMC.R R/setDefaultPrec.R R/exhaustiveSearch.R R/conditionalPoisson.R)
 set(RPackageFiles DESCRIPTION NAMESPACE ${RFiles})
 
 #Find location of Rcpp_exceptions.R 

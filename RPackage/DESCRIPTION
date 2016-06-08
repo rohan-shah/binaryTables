@@ -16,3 +16,4 @@ Collate:
 	'setDefaultPrec.R'
 	'crudeMC.R'
 	'exhaustiveSearch.R'
+	'conditionalPoisson.R'

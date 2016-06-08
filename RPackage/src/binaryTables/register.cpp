@@ -7,11 +7,13 @@
 #include "includeMPFRBinaryTables.h"
 #include "crudeMC.h"
 #include "exhaustiveSearch.h"
+#include "conditionalPoissonBinaryTables.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
 	{"crudeMC", (DL_FUNC)&binaryTables::crudeMC, 4},
 	{"exhaustiveSearch", (DL_FUNC)&binaryTables::exhaustiveSearch, 2}, 
+	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoisson, 4},
 	{NULL, NULL, 0}
 };
 RcppExport void R_init_binaryTables(DllInfo *info)
