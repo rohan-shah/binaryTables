@@ -1,7 +1,7 @@
 #ifndef CONDITIONAL_POISSON_IMPL_HEADER_GUARD
 #define CONDITIONAL_POISSON_IMPL_HEADER_GUARD
 #include "problem.h"
-#include "conditionalPoisson.h"
+#include "conditionalPoissonDrafting.h"
 #include "includeMPFRBinaryTables.h"
 #include <boost/random/mersenne_twister.hpp>
 namespace binaryTables
@@ -15,7 +15,7 @@ namespace binaryTables
 		std::size_t n;
 		problem& problemObj;
 		mpfr_class estimate;
-		sampling::conditionalPoissonArgs samplingArgs;
+		sampling::conditionalPoissonDraftingArgs samplingArgs;
 		std::vector<mpfr_class> inclusionProbablities, samplingWeights;
 		boost::mt19937 randomSource;
 	private:

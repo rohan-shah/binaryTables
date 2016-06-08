@@ -9,7 +9,7 @@ namespace binaryTables
 		problem& problemObj = args.problemObj;
 		const std::vector<int>& rowSums = problemObj.getRowSums();
 		const std::vector<int>& columnSums = problemObj.getColumnSums();
-		sampling::conditionalPoissonArgs& samplingArgs = args.samplingArgs;
+		sampling::conditionalPoissonDraftingArgs& samplingArgs = args.samplingArgs;
 		std::vector<mpfr_class>& inclusionProbabilities = args.inclusionProbablities;
 		std::vector<mpfr_class>& samplingWeights = args.samplingWeights;
 		std::vector<int> indices;
@@ -40,7 +40,7 @@ namespace binaryTables
 					samplingWeights.push_back(currentRowSums[row]);
 				}
 				samplingArgs.calculateInclusionProbabilities = true;
-				conditionalPoisson(samplingArgs, args.randomSource);
+				conditionalPoissonDrafting(samplingArgs, args.randomSource);
 				std::sort(indices.begin(), indices.end());
 				int deterministicCount = 0;
 				for(int j = 0; j < currentColumnSums[column]; j++)
