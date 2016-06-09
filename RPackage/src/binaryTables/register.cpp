@@ -9,12 +9,14 @@
 #include "exhaustiveSearch.h"
 #include "conditionalPoissonBinaryTables.h"
 #include "setDefaultPrec.h"
+#include "withoutReplacement.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
 	{"crudeMC", (DL_FUNC)&binaryTables::crudeMC, 4},
 	{"exhaustiveSearch", (DL_FUNC)&binaryTables::exhaustiveSearch, 2}, 
 	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoisson, 4},
+	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 4},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
 	{NULL, NULL, 0}
 };
