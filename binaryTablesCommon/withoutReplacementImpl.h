@@ -19,6 +19,7 @@ namespace binaryTables
 		sampling::sampfordFromParetoNaiveArgs samplingArgs;
 		mpfr_class estimate;
 		boost::mt19937 randomSource;
+		std::vector<int> totalRemaining, newTotalRemaining;
 	};
 	void withoutReplacement(withoutReplacementArgs& args);
 }
