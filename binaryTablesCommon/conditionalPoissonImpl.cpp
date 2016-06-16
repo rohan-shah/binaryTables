@@ -38,7 +38,7 @@ namespace binaryTables
 				int deterministicCount = 0;
 				for(int j = 0; j < currentColumnSums[column]; j++)
 				{
-					if(column != nColumns - 1 && samplingArgs.deterministicInclusion[indices[j]])
+					if(currentRowSums[indices[j]] != (int)nColumns - (int)column && samplingArgs.deterministicInclusion[indices[j]])
 					{
 						throw std::runtime_error("No units can be deterministically selected except for the last column");
 					}

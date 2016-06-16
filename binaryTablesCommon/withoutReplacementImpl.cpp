@@ -45,7 +45,7 @@ namespace binaryTables
 		sampling::samplingBase(initialColumnSums[0], cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.rescaledWeights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, conditionalPoissonInclusionProbabilities);
 
 		computeExponentialParameters(cpSamplingArgs);
-		sampling::conditionalPoissonInclusionProbabilities(cpSamplingArgs, cpSamplingArgs.inclusionProbabilities);
+		sampling::calculateExpNormalisingConstants(cpSamplingArgs);
 		mpfr_class selectionProb;
 		if(initialRowSums[0] == 0)
 		{
@@ -279,7 +279,7 @@ namespace binaryTables
 					cpSamplingArgs.weights.insert(cpSamplingArgs.weights.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
 					sampling::samplingBase(cpSamplingArgs.n, cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.rescaledWeights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, conditionalPoissonInclusionProbabilities);
 					computeExponentialParameters(cpSamplingArgs);
-					sampling::conditionalPoissonInclusionProbabilities(cpSamplingArgs, cpSamplingArgs.inclusionProbabilities);
+					calculateExpNormalisingConstants(cpSamplingArgs);
 
 					currentSample.skipped = 0;
 					currentSample.nRemainingZeros = currentSample.nRemainingDeterministic = 0;
