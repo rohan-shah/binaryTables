@@ -8,8 +8,8 @@ namespace binaryTables
 {
 	struct withoutReplacementSample
 	{
-		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, int totalRemaining)
-			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), totalRemaining(totalRemaining)
+		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, int totalRemaining, boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants, boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters)
+			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), totalRemaining(totalRemaining), expNormalisingConstants(expNormalisingConstants), expExponentialParameters(expExponentialParameters)
 		{}
 		int columnSum;
 		mpfr_class sizeVariable;

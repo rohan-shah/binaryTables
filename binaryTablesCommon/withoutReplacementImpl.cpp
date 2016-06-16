@@ -69,13 +69,13 @@ namespace binaryTables
 		if(initialRowSums[0] == 0)
 		{
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin());
-			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes));
+			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			samples[0].skipped = 1;
 		}
 		else if(initialRowSums[0] == (int)nColumns)
 		{
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin());
-			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1));
+			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			sampleRowSums[0]--;
 			samples[0].skipped = 1;
 		}
@@ -85,14 +85,12 @@ namespace binaryTables
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin() + nRows);
 			sampleRowSums[0]--;
 			//The first sample has a one in the first column. To start off with, don't 
-			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1));
-			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes));
+			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1, initialExpNormalisingConstantData, initialExpExponentialParameters));
+			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			samples[0].skipped = samples[1].skipped = 0;
 		}
 		for(std::size_t i = 0; i < samples.size(); i++)
 		{
-			samples[i].expExponentialParameters = initialExpExponentialParameters;
-			samples[i].expNormalisingConstants = initialExpNormalisingConstantData;
 			//This is to do with skipping over the rows which have a row-sum of zero
 			samples[i].nRemainingZeros = samples[i].nRemainingDeterministic = 0;
 			for(int j = 0; j < (int)nRows; j++)
@@ -152,9 +150,7 @@ namespace binaryTables
 							selectionProb = (*parentSample.expExponentialParameters)[row] * (*parentSample.expNormalisingConstants)(row+1 - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 2 - parentSample.nRemainingDeterministic) / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 1 - parentSample.nRemainingDeterministic);
 						}
 						newSampleRowSums[nRows * outputCounter + row]--;
-						newSamples.push_back(withoutReplacementSample(parentSample.columnSum + 1, parentSample.sizeVariable * selectionProb, parentSample.productInclusionProbabilities, parentSample.totalRemaining - 1));
-						newSamples.back().expExponentialParameters = parentSample.expExponentialParameters;
-						newSamples.back().expNormalisingConstants = parentSample.expNormalisingConstants;
+						newSamples.push_back(withoutReplacementSample(parentSample.columnSum + 1, parentSample.sizeVariable * selectionProb, parentSample.productInclusionProbabilities, parentSample.totalRemaining - 1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 						newSamples.back().skipped = newSkipped;
 						newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
 						newSamples.back().nRemainingDeterministic = newDeterministic;
@@ -179,9 +175,7 @@ namespace binaryTables
 						{
 							selectionProb = (*parentSample.expExponentialParameters)[row] * (*parentSample.expNormalisingConstants)(row+1 - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 2 - parentSample.nRemainingDeterministic) / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 1 - parentSample.nRemainingDeterministic);
 						}
-						newSamples.push_back(withoutReplacementSample(parentSample.columnSum, parentSample.sizeVariable * (1 - selectionProb), parentSample.productInclusionProbabilities, parentSample.totalRemaining));
-						newSamples.back().expExponentialParameters = parentSample.expExponentialParameters;
-						newSamples.back().expNormalisingConstants = parentSample.expNormalisingConstants;
+						newSamples.push_back(withoutReplacementSample(parentSample.columnSum, parentSample.sizeVariable * (1 - selectionProb), parentSample.productInclusionProbabilities, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 						newSamples.back().skipped = newSkipped;
 						newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
 						newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
@@ -245,9 +239,7 @@ namespace binaryTables
 							int parentIndex = choicesDown[selected - choicesUp.size()];
 							withoutReplacementSample& parentSample = samples[parentIndex];
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
-							newSamples.push_back(withoutReplacementSample(parentSample.columnSum, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining));
-							newSamples.back().expExponentialParameters = parentSample.expExponentialParameters;
-							newSamples.back().expNormalisingConstants = parentSample.expNormalisingConstants;
+							newSamples.push_back(withoutReplacementSample(parentSample.columnSum, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 							newSamples.back().skipped = parentSample.skipped;
 							newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
 							newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
@@ -260,9 +252,7 @@ namespace binaryTables
 							withoutReplacementSample& parentSample = samples[parentIndex];
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
 							newSampleRowSums[i*nRows + row]--;
-							newSamples.push_back(withoutReplacementSample(parentSample.columnSum+1, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining-1));
-							newSamples.back().expExponentialParameters = parentSample.expExponentialParameters;
-							newSamples.back().expNormalisingConstants = parentSample.expNormalisingConstants;
+							newSamples.push_back(withoutReplacementSample(parentSample.columnSum+1, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining-1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 							newSamples.back().skipped = parentSample.skipped;
 							newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
 							newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
@@ -298,6 +288,7 @@ namespace binaryTables
 						if(sampleRowSums[i * nRows + j] == 0) currentSample.nRemainingZeros++;
 						if(cpSamplingArgs.deterministicInclusion[j]) currentSample.nRemainingDeterministic++;
 					}
+					//Swap in data from cpSamplingArgs to the sample
 					currentSample.expNormalisingConstants.reset(new boost::numeric::ublas::matrix<mpfr_class>());
 					currentSample.expNormalisingConstants->swap(cpSamplingArgs.expNormalisingConstant);
 
