@@ -3,8 +3,24 @@
 #include "sampford.h"
 #include "problem.h"
 #include "includeMPFRBinaryTables.h"
+#include <boost/numeric/ublas/matrix.hpp>
 namespace binaryTables
 {
+	struct withoutReplacementSample
+	{
+		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, int totalRemaining)
+			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), totalRemaining(totalRemaining)
+		{}
+		int columnSum;
+		mpfr_class sizeVariable;
+		mpfr_class productInclusionProbabilities;
+		int totalRemaining;
+		boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants;
+		boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters;
+		int skipped;
+		int nRemainingZeros;
+		int nRemainingDeterministic;
+	};
 	struct withoutReplacementArgs
 	{
 	public:
@@ -13,13 +29,11 @@ namespace binaryTables
 		{}
 		std::size_t n;
 		problem& problemObj;
-		std::vector<int> sampleRowSums, newSampleRowSums, columnSums, newColumnSums;
-		std::vector<mpfr_class> sizeVariables, newSizeVariables;
-		std::vector<mpfr_class> productInclusionProbabilities, newProductInclusionProbabilities;
+		std::vector<int> sampleRowSums, newSampleRowSums;
 		sampling::sampfordFromParetoNaiveArgs samplingArgs;
+		std::vector<withoutReplacementSample> samples, newSamples;
 		mpfr_class estimate;
 		boost::mt19937 randomSource;
-		std::vector<int> totalRemaining, newTotalRemaining;
 	};
 	void withoutReplacement(withoutReplacementArgs& args);
 }

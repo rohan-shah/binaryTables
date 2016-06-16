@@ -16,7 +16,6 @@ namespace binaryTables
 		problem& problemObj;
 		mpfr_class estimate;
 		sampling::conditionalPoissonDraftingArgs samplingArgs;
-		std::vector<mpfr_class> inclusionProbablities, samplingWeights;
 		boost::mt19937 randomSource;
 	private:
 

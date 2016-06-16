@@ -10,18 +10,12 @@ namespace binaryTables
 		const std::vector<int>& rowSums = problemObj.getRowSums();
 		const std::vector<int>& columnSums = problemObj.getColumnSums();
 		sampling::conditionalPoissonDraftingArgs& samplingArgs = args.samplingArgs;
-		std::vector<mpfr_class>& inclusionProbabilities = args.inclusionProbablities;
-		std::vector<mpfr_class>& samplingWeights = args.samplingWeights;
-		std::vector<int> indices;
+		std::vector<mpfr_class>& samplingWeights = samplingArgs.weights;
 
 		std::size_t nColumns = columnSums.size(), nRows = rowSums.size();
 		GayleRyserTestWorking working(true);
 
-		samplingArgs.inclusionProbabilities = &inclusionProbabilities;
-		samplingArgs.weights = &samplingWeights;
-		std::vector<mpfr_class> rescaledWeights;
-		samplingArgs.rescaledWeights = &rescaledWeights;
-		samplingArgs.indices = &indices;
+		std::vector<int>& indices = samplingArgs.indices;
 
 		std::vector<int> currentRowSums(nRows);
 		std::vector<int> currentColumnSums(nColumns);
@@ -39,7 +33,6 @@ namespace binaryTables
 				{
 					samplingWeights.push_back(currentRowSums[row]);
 				}
-				samplingArgs.calculateInclusionProbabilities = true;
 				conditionalPoissonDrafting(samplingArgs, args.randomSource);
 				std::sort(indices.begin(), indices.end());
 				int deterministicCount = 0;
