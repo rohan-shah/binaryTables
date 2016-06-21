@@ -3,6 +3,23 @@
 #include "samplingBase.h"
 namespace binaryTables
 {
+	withoutReplacementSample::withoutReplacementSample(withoutReplacementSample&& other)
+		: columnSum(other.columnSum), sizeVariable(std::move(other.sizeVariable)), productInclusionProbabilities(std::move(other.productInclusionProbabilities)), totalRemaining(other.totalRemaining), expNormalisingConstants(other.expNormalisingConstants), expExponentialParameters(other.expExponentialParameters), skipped(other.skipped), nRemainingZeros(other.nRemainingZeros), nRemainingDeterministic(other.nRemainingDeterministic)
+	{
+	}
+	withoutReplacementSample& withoutReplacementSample::operator=(withoutReplacementSample&& other)
+	{
+		columnSum = other.columnSum;
+		sizeVariable = std::move(other.sizeVariable);
+		productInclusionProbabilities = std::move(other.productInclusionProbabilities);
+		totalRemaining = other.totalRemaining;
+		expNormalisingConstants = other.expNormalisingConstants;
+		expExponentialParameters = other.expExponentialParameters;
+		skipped = other.skipped;
+		nRemainingZeros = other.nRemainingZeros;
+		nRemainingDeterministic = other.nRemainingDeterministic;
+		return *this;
+	}
 	void withoutReplacement(withoutReplacementArgs& args)
 	{
 		problem& problemObj = args.problemObj;
@@ -41,8 +58,9 @@ namespace binaryTables
 		//We are going to perform conditional Poisson sampling using the sequential method. Se we need the selection probabilities. 
 		//This requires that we compute the exponentials of the normalising constants. 
 		cpSamplingArgs.weights.clear();
-		for(std::size_t i = 0; i < nRows; i++) cpSamplingArgs.weights.push_back(initialRowSums[i]);
-		sampling::samplingBase(initialColumnSums[0], cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.rescaledWeights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, conditionalPoissonInclusionProbabilities);
+		int nDeterministic = 0, nZeroWeights = 0;
+		for(std::size_t i = 0; i < nRows; i++) cpSamplingArgs.weights.push_back(initialRowSums[i]/(double)nColumns);
+		sampling::samplingBase(initialColumnSums[0], cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, nDeterministic, nZeroWeights);
 
 		computeExponentialParameters(cpSamplingArgs);
 		sampling::calculateExpNormalisingConstants(cpSamplingArgs);
@@ -97,6 +115,10 @@ namespace binaryTables
 			{
 				if(sampleRowSums[i * nRows + j] == 0) samples[i].nRemainingZeros++;
 				if(sampleRowSums[i * nRows + j] == (int)nColumns) samples[i].nRemainingDeterministic++;
+				if(sampleRowSums[i * nRows + j] != (int)nColumns && cpSamplingArgs.deterministicInclusion[j])
+				{
+					throw std::runtime_error("No units can be deterministically selected unless the entire row must contain all ones");
+				}
 			}
 		}
 
@@ -113,16 +135,16 @@ namespace binaryTables
 				{
 					if(sampleRowSums[i*nRows + row] == 0)
 					{
-						if(samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum <= initialColumnSums[column]) choicesDown.push_back((int)i);
+						if(samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
 					}
 					else if(sampleRowSums[i*nRows + row] == (int)nColumns - column)
 					{
-						if(samples[i].columnSum + 1 <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros>= initialColumnSums[column]) choicesUp.push_back((int)i);
+						if(samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
 					}
 					else
 					{
-						if(samples[i].columnSum + 1 <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros>= initialColumnSums[column]) choicesUp.push_back((int)i);
-						if(samples[i].columnSum + (int)nRows - row - 1 - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum <= initialColumnSums[column]) choicesDown.push_back((int)i);
+						if(samples[i].columnSum + samples[i].nRemainingDeterministic + 1 <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
+						if(samples[i].columnSum + (int)nRows - row - 1 - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
 					}
 				}
 				newSamples.clear();
@@ -195,7 +217,7 @@ namespace binaryTables
 						{
 							selectionProb = 1;
 						}
-						else if(parentSample.columnSum == initialColumnSums[column]-1)
+						else if(parentSample.columnSum == initialColumnSums[column]-1 - parentSample.nRemainingDeterministic)
 						{
 							selectionProb = (*parentSample.expExponentialParameters)[row] / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, 0);
 						}
@@ -271,29 +293,42 @@ namespace binaryTables
 			{
 				for(std::size_t i = 0; i < samples.size(); i++)
 				{
-					withoutReplacementSample& currentSample = samples[i];
-					currentSample.columnSum = 0;
-					//Reset the inclusion probabilities for the conditional Poisson sampling
-					cpSamplingArgs.weights.clear();
-					cpSamplingArgs.n = initialColumnSums[column+1];
-					cpSamplingArgs.weights.insert(cpSamplingArgs.weights.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
-					sampling::samplingBase(cpSamplingArgs.n, cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.rescaledWeights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, conditionalPoissonInclusionProbabilities);
-					computeExponentialParameters(cpSamplingArgs);
-					calculateExpNormalisingConstants(cpSamplingArgs);
-
-					currentSample.skipped = 0;
-					currentSample.nRemainingZeros = currentSample.nRemainingDeterministic = 0;
-					for(int j = 0; j < (int)nRows; j++)
+					//This throws an exception if there is no possible sample, in which case the sample is removed. 
+					try
 					{
-						if(sampleRowSums[i * nRows + j] == 0) currentSample.nRemainingZeros++;
-						if(cpSamplingArgs.deterministicInclusion[j]) currentSample.nRemainingDeterministic++;
-					}
-					//Swap in data from cpSamplingArgs to the sample
-					currentSample.expNormalisingConstants.reset(new boost::numeric::ublas::matrix<mpfr_class>());
-					currentSample.expNormalisingConstants->swap(cpSamplingArgs.expNormalisingConstant);
+						withoutReplacementSample& currentSample = samples[i];
+						currentSample.columnSum = 0;
+						//Reset the inclusion probabilities for the conditional Poisson sampling
+						cpSamplingArgs.weights.clear();
+						cpSamplingArgs.n = initialColumnSums[column+1];
+						cpSamplingArgs.weights.insert(cpSamplingArgs.weights.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+						for(std::vector<mpfr_class>::iterator i = cpSamplingArgs.weights.begin(); i != cpSamplingArgs.weights.end(); i++)
+						{
+							*i /= nColumns - (column+1);
+						}
+						currentSample.nRemainingDeterministic = 0;
+						currentSample.nRemainingZeros = 0;
+						sampling::samplingBase(cpSamplingArgs.n, cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, currentSample.nRemainingDeterministic, currentSample.nRemainingZeros);
+						computeExponentialParameters(cpSamplingArgs);
+						calculateExpNormalisingConstants(cpSamplingArgs);
 
-					currentSample.expExponentialParameters.reset(new std::vector<mpfr_class>());
-					currentSample.expExponentialParameters->swap(cpSamplingArgs.expExponentialParameters);
+						currentSample.skipped = 0;
+						//Swap in data from cpSamplingArgs to the sample
+						currentSample.expNormalisingConstants.reset(new boost::numeric::ublas::matrix<mpfr_class>());
+						currentSample.expNormalisingConstants->swap(cpSamplingArgs.expNormalisingConstant);
+
+						currentSample.expExponentialParameters.reset(new std::vector<mpfr_class>());
+						currentSample.expExponentialParameters->swap(cpSamplingArgs.expExponentialParameters);
+					}
+					catch(...)
+					{
+						if(i != samples.size() - 1)
+						{
+							samples[i] = std::move(samples.back());
+							i--;
+						}
+						samples.pop_back();
+					}
 				}
 			}
 			row = 0;

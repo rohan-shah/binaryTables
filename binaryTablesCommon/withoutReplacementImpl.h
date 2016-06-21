@@ -11,6 +11,8 @@ namespace binaryTables
 		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, int totalRemaining, boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants, boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters)
 			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), totalRemaining(totalRemaining), expNormalisingConstants(expNormalisingConstants), expExponentialParameters(expExponentialParameters)
 		{}
+		withoutReplacementSample(withoutReplacementSample&& other);
+		withoutReplacementSample& operator=(withoutReplacementSample&& other);
 		int columnSum;
 		mpfr_class sizeVariable;
 		mpfr_class productInclusionProbabilities;

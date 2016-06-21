@@ -31,7 +31,7 @@ namespace binaryTables
 				samplingWeights.clear();
 				for(std::size_t row = 0; row < nRows; row++)
 				{
-					samplingWeights.push_back(currentRowSums[row]);
+					samplingWeights.push_back(currentRowSums[row] / (double)(nColumns - column));
 				}
 				conditionalPoissonDrafting(samplingArgs, args.randomSource);
 				std::sort(indices.begin(), indices.end());
@@ -40,7 +40,7 @@ namespace binaryTables
 				{
 					if(currentRowSums[indices[j]] != (int)nColumns - (int)column && samplingArgs.deterministicInclusion[indices[j]])
 					{
-						throw std::runtime_error("No units can be deterministically selected except for the last column");
+						throw std::runtime_error("No units can be deterministically selected unless the entire row must contain all ones");
 					}
 					if(!samplingArgs.deterministicInclusion[indices[j]])
 					{
