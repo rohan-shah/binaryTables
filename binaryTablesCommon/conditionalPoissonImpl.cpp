@@ -19,6 +19,7 @@ namespace binaryTables
 
 		std::vector<int> currentRowSums(nRows);
 		std::vector<int> currentColumnSums(nColumns);
+		mpfr_class secondMoment = 0;
 		args.estimate = 0;
 		for(std::size_t i = 0; i < n; i++)
 		{
@@ -65,10 +66,12 @@ namespace binaryTables
 				if(currentRowSums[rowCounter] > 0) goto notValid;
 			}
 			args.estimate += 1/density;
+			secondMoment += 1/(density*density);
 notValid:
 			;
 		}
+		secondMoment /= n;
 		args.estimate /= n;
-		//args.estimate /= boost::multiprecision(mpfr_class(2), nRows*nColumns);
+		args.varianceEstimate = secondMoment - args.estimate*args.estimate;
 	}
 }

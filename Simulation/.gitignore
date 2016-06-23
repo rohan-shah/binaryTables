@@ -1,0 +1,5 @@
+/results
+/summarised.RData
+/binaryTables.o*
+/binaryTables.po*
+/jobScript.Rout.*

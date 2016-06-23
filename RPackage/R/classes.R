@@ -1,0 +1,2 @@
+setClass("withoutReplacementResult", slots = list(estimate = "mpfr", call = "call", start = "POSIXct", end = "POSIXct", n = "integer", seed = "integer", rowSums = "integer", columnSums = "integer"))
+setClass("conditionalPoissonResult", slots = list(varianceEstimate = "mpfr", estimate = "mpfr", call = "call", start = "POSIXct", end = "POSIXct", n = "integer", seed = "integer", rowSums = "integer", columnSums = "integer"))

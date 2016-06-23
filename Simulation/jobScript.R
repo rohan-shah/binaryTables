@@ -1,0 +1,51 @@
+source("./generateScenarios.R")
+SCENARIO_INDEX <- as.integer(Sys.getenv("SCENARIO_INDEX"))
+cat("SCENARIO_INDEX=", SCENARIO_INDEX, "\n", sep="")
+
+library(binaryTables)
+outputFile <- file.path("results", scenarios[SCENARIO_INDEX, "file"])
+tmpFile <- paste0(outputFile, ".tmp")
+scenario <- scenarios[SCENARIO_INDEX, "scenario"]
+replications <- scenarios[SCENARIO_INDEX, "replications"]
+sampleSize <- scenarios[SCENARIO_INDEX, "sampleSize"]
+method <- scenarios[SCENARIO_INDEX, "method"]
+
+if(scenario == "exact12x12")
+{
+	columnSums <- rowSums <- rep(2, 12)
+} else if(scenario == "50x50_1")
+{
+	rowSums <- c(10, 8, 11, 11, 13, 11, 10, 9, 7, 9, 10, 16, 11, 9, 12, 14, 12, 7, 9, 10, 10, 6, 11, 8, 9, 8, 14, 12, 5, 10, 10, 8, 7, 8, 10, 10, 14, 6, 10, 7, 13, 4, 6, 8, 9, 15, 11, 12, 10, 6)
+	columnSums <- c(9, 6, 12, 11, 9, 8, 8, 11, 9, 11, 13, 7, 10, 8, 9, 7, 8, 3, 10, 11, 13, 7, 5, 11, 10, 9, 10, 13, 9, 9, 7, 7, 6, 8, 10, 12, 8, 12, 16, 12, 15, 12, 13, 13, 10, 7, 12, 13, 6, 11)
+} else
+{
+	stop("Unknown scenario")
+}
+counter <- 1
+if(file.exists(outputFile))
+{
+	load(outputFile)
+	counter <- length(results) + 1
+} else results <- list()
+if(method == "CP")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- conditionalPoisson(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+} else if(method == "WOR")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- withoutReplacement(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+} else
+{
+	stop("Unknown method")
+}

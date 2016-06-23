@@ -18,3 +18,4 @@ Collate:
 	'exhaustiveSearch.R'
 	'conditionalPoisson.R'
 	'withoutReplacement.R'
+	'classes.R'

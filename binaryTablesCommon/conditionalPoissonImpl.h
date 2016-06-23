@@ -14,7 +14,7 @@ namespace binaryTables
 		{}
 		std::size_t n;
 		problem& problemObj;
-		mpfr_class estimate;
+		mpfr_class estimate, varianceEstimate;
 		sampling::conditionalPoissonDraftingArgs samplingArgs;
 		boost::mt19937 randomSource;
 	private:

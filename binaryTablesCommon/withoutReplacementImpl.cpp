@@ -1,6 +1,7 @@
 #include "withoutReplacementImpl.h"
 #include "conditionalPoissonSequential.h"
 #include "samplingBase.h"
+#include "GayleRyserTest.h"
 namespace binaryTables
 {
 	withoutReplacementSample::withoutReplacementSample(withoutReplacementSample&& other)
@@ -32,6 +33,8 @@ namespace binaryTables
 		for(std::vector<int>::const_iterator i = initialRowSums.begin(); i != initialRowSums.end(); i++) totalOnes += *i;
 		
 		std::size_t n = args.n;
+
+		GayleRyserTestWorking gayleRyserTestWorking(true);
 
 		//Extract data from args
 		std::vector<int>& sampleRowSums = args.sampleRowSums;
@@ -293,10 +296,22 @@ namespace binaryTables
 			{
 				for(std::size_t i = 0; i < samples.size(); i++)
 				{
+					bool shouldRemove = false;
 					//This throws an exception if there is no possible sample, in which case the sample is removed. 
 					try
 					{
 						withoutReplacementSample& currentSample = samples[i];
+
+						//Use the Gayle Ryser test to check if we should continue
+						gayleRyserTestWorking.sortedSums1.clear();
+						gayleRyserTestWorking.sortedSums2.clear();
+						gayleRyserTestWorking.sortedSums1.insert(gayleRyserTestWorking.sortedSums1.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+						gayleRyserTestWorking.sortedSums2.insert(gayleRyserTestWorking.sortedSums2.begin(), initialColumnSums.begin(), initialColumnSums.end());
+						if(!GayleRyserTest(gayleRyserTestWorking.sortedSums2, gayleRyserTestWorking.sortedSums1, column+1, gayleRyserTestWorking))
+						{
+							shouldRemove = true;
+							goto testRemove;
+						}
 						currentSample.columnSum = 0;
 						//Reset the inclusion probabilities for the conditional Poisson sampling
 						cpSamplingArgs.weights.clear();
@@ -321,6 +336,11 @@ namespace binaryTables
 						currentSample.expExponentialParameters->swap(cpSamplingArgs.expExponentialParameters);
 					}
 					catch(...)
+					{
+						shouldRemove = true;
+					}
+testRemove:
+					if(shouldRemove)
 					{
 						if(i != samples.size() - 1)
 						{

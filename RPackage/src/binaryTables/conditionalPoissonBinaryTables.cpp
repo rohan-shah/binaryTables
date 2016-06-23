@@ -19,7 +19,7 @@ namespace binaryTables
 		args.n = (std::size_t)n;
 		args.randomSource.seed(seed);
 		conditionalPoisson(args);
-		return Rcpp::wrap(args.estimate.str());
+		return Rcpp::List::create(Rcpp::Named("estimate") = args.estimate.str(), Rcpp::Named("varianceEstimate") = args.varianceEstimate.str());
 	END_RCPP
 	}
 }

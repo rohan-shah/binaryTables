@@ -1,7 +1,8 @@
 withoutReplacement <- function(rowSums, columnSums, n, seed)
 {
-	rowSums <- rowSums[rowSums > 0]
-	columnSums <- columnSums[columnSums > 0]
+	start <- Sys.time()
 	result <- .Call("withoutReplacement", rowSums, columnSums, n, seed, PACKAGE="binaryTables")
-	return(mpfr(result))
+	end <- Sys.time()
+	estimate <- mpfr(result)
+	return(new("withoutReplacementResult", start = start, end = end, estimate = estimate, n = as.integer(n), seed = as.integer(seed), rowSums = as.integer(rowSums), columnSums = as.integer(columnSums), call = match.call()))
 }
