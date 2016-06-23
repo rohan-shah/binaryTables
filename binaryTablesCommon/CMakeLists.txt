@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
-set(CppFiles crudeMCImpl.cpp GayleRyserTest.cpp problem.cpp exhaustiveSearchImpl.cpp conditionalPoissonImpl.cpp withoutReplacementImpl.cpp)
-set(HeaderFiles crudeMCImpl.h includeMPFRBinaryTables.h GayleRyserTest.h problem.h exhaustiveSearchImpl.h conditionalPoissonImpl.h withoutReplacementImpl.h)
+set(CppFiles crudeMCImpl.cpp GayleRyserTest.cpp problem.cpp exhaustiveSearchImpl.cpp conditionalPoissonImpl.cpp withoutReplacementImpl.cpp withoutReplacementMergingImpl.cpp)
+set(HeaderFiles crudeMCImpl.h includeMPFRBinaryTables.h GayleRyserTest.h problem.h exhaustiveSearchImpl.h conditionalPoissonImpl.h withoutReplacementImpl.h withoutReplacementMergingImpl.h)
 
 add_library(binaryTablesCommon STATIC ${CppFiles} ${HeaderFiles})
 target_include_directories(binaryTablesCommon PUBLIC ${Boost_INCLUDE_DIRS})

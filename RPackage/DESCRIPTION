@@ -19,3 +19,4 @@ Collate:
 	'conditionalPoisson.R'
 	'withoutReplacement.R'
 	'classes.R'
+	'withoutReplacementMerging.R'

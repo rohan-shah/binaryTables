@@ -45,6 +45,19 @@ if(method == "CP")
 		file.rename(from = tmpFile, to = outputFile)
 		counter <- counter + 1
 	}
+} else if(method == "WOR-Merge1" || method == "WOR-Merge50")
+{
+	if(method == "WOR-Merge1") mergeFrequency <- 1
+	else if(method == "WOR-Merge50") mergeFrequency <- 50
+	else stop("Internal error")
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- withoutReplacementMerging(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize, mergeFrequency = mergeFrequency)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+
 } else
 {
 	stop("Unknown method")

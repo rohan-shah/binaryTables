@@ -1,8 +1,8 @@
-#include "withoutReplacement.h"
-#include "withoutReplacementImpl.h"
+#include "withoutReplacementMerging.h"
+#include "withoutReplacementMergingImpl.h"
 namespace binaryTables
 {
-	SEXP withoutReplacement(SEXP rowSums_sexp, SEXP columnSums_sexp, SEXP n_sexp, SEXP seed_sexp)
+	SEXP withoutReplacementMerging(SEXP rowSums_sexp, SEXP columnSums_sexp, SEXP n_sexp, SEXP seed_sexp, SEXP mergeFrequency_sexp)
 	{
 	BEGIN_RCPP
 		std::vector<int> rowSums = Rcpp::as<std::vector<int> >(rowSums_sexp);
@@ -19,12 +19,14 @@ namespace binaryTables
 
 		std::size_t n = (std::size_t)Rcpp::as<int>(n_sexp);
 		int seed = Rcpp::as<int>(seed_sexp);
+		int mergeFrequency = Rcpp::as<int>(mergeFrequency_sexp);
 
 		problem problemObj(rowSums, columnSums);
-		withoutReplacementArgs args(problemObj);
+		withoutReplacementMergingArgs args(problemObj);
 		args.n = n;
 		args.randomSource.seed(seed);
-		withoutReplacement(args);
+		args.mergeFrequency = mergeFrequency;
+		withoutReplacementMerging(args);
 		std::string estimate_str = args.estimate.str();
 		return Rcpp::wrap(estimate_str);
 	END_RCPP

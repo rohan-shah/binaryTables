@@ -5,6 +5,7 @@ submittedJobs <- 0
 for(i in 1:nrow(scenarios))
 {
 	resultFile <- file.path("results", scenarios[i, "file"])
+	replications <- scenarios[i, "replications"]
 	if(!file.exists(resultFile))
 	{
 		submit <- TRUE
@@ -13,7 +14,7 @@ for(i in 1:nrow(scenarios))
 	{
 		rm(results)
 		load(resultFile)
-		if(length(results) != 100)
+		if(length(results) != replications)
 		{
 			submit <- TRUE
 		}
