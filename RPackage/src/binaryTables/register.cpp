@@ -11,6 +11,7 @@
 #include "setDefaultPrec.h"
 #include "withoutReplacement.h"
 #include "withoutReplacementMerging.h"
+#include "calculateConditionalPoissonDensity.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
@@ -20,6 +21,7 @@ R_CallMethodDef callMethods[] =
 	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 5},
 	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
+	{"calculateConditionalPoissonDensity", (DL_FUNC)&binaryTables::calculateConditionalPoissonDensity, 1},
 	{NULL, NULL, 0}
 };
 RcppExport void R_init_binaryTables(DllInfo *info)

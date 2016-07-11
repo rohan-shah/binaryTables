@@ -20,3 +20,4 @@ Collate:
 	'withoutReplacement.R'
 	'classes.R'
 	'withoutReplacementMerging.R'
+	'calculateConditionalPoissonDensity.R'
