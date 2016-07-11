@@ -3,6 +3,6 @@
 #include <Rcpp.h>
 namespace binaryTables
 {
-	SEXP withoutReplacement(SEXP rowSums, SEXP columnSums, SEXP n, SEXP seed);
+	SEXP withoutReplacement(SEXP rowSums, SEXP columnSums, SEXP n, SEXP seed, SEXP keepTables);
 }
 #endif

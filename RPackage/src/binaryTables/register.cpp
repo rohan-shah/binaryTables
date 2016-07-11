@@ -17,7 +17,7 @@ R_CallMethodDef callMethods[] =
 	{"crudeMC", (DL_FUNC)&binaryTables::crudeMC, 4},
 	{"exhaustiveSearch", (DL_FUNC)&binaryTables::exhaustiveSearch, 2}, 
 	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoisson, 4},
-	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 4},
+	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 5},
 	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
 	{NULL, NULL, 0}
