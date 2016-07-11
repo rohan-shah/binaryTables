@@ -22,12 +22,13 @@ namespace binaryTables
 		int skipped;
 		int nRemainingZeros;
 		int nRemainingDeterministic;
+		std::vector<bool> table, deterministicInclusion;
 	};
 	struct withoutReplacementArgs
 	{
 	public:
 		withoutReplacementArgs(problem& problemObj)
-			: problemObj(problemObj)
+			: problemObj(problemObj), keepTables(false)
 		{}
 		std::size_t n;
 		problem& problemObj;
@@ -36,6 +37,8 @@ namespace binaryTables
 		std::vector<withoutReplacementSample> samples, newSamples;
 		mpfr_class estimate;
 		boost::mt19937 randomSource;
+		bool keepTables;
+		std::vector<bool> tables;
 	};
 	void withoutReplacement(withoutReplacementArgs& args);
 }

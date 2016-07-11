@@ -39,10 +39,6 @@ namespace binaryTables
 				int deterministicCount = 0;
 				for(int j = 0; j < currentColumnSums[column]; j++)
 				{
-					if(currentRowSums[indices[j]] != (int)nColumns - (int)column && samplingArgs.deterministicInclusion[indices[j]])
-					{
-						throw std::runtime_error("No units can be deterministically selected unless the entire row must contain all ones");
-					}
 					if(!samplingArgs.deterministicInclusion[indices[j]])
 					{
 						density *= samplingArgs.expExponentialParameters[indices[j]];
