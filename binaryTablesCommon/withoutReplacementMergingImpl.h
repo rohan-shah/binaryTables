@@ -22,6 +22,7 @@ namespace binaryTables
 		int skipped;
 		int nRemainingZeros;
 		int nRemainingDeterministic;
+		std::vector<bool> deterministicInclusion;
 	};
 	struct withoutReplacementMergingArgs
 	{
