@@ -12,6 +12,7 @@
 #include "withoutReplacement.h"
 #include "withoutReplacementMerging.h"
 #include "calculateConditionalPoissonDensity.h"
+#include "withoutReplacementSingleStep.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
@@ -22,6 +23,7 @@ R_CallMethodDef callMethods[] =
 	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
 	{"calculateConditionalPoissonDensity", (DL_FUNC)&binaryTables::calculateConditionalPoissonDensity, 1},
+	{"withoutReplacementSingleStep", (DL_FUNC)&binaryTables::withoutReplacementSingleStep, 4},
 	{NULL, NULL, 0}
 };
 RcppExport void R_init_binaryTables(DllInfo *info)

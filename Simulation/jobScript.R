@@ -21,6 +21,12 @@ if(scenario == "exact12x12")
 {
 	rowSums <- c(14, 14, 19, 18, 11, 12, 12, 10, 13, 16, 8, 12, 6, 15, 6, 7, 12, 1, 12, 3, 8, 5, 9, 4, 2, 4, 1, 4, 4, 5, 2, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 3, 3, 1, 3, 2, 1, 1, 1, 2)
 	columnSums <- c(14, 13, 14, 13, 13, 12, 14, 8, 11, 9, 10, 8, 9, 8, 4, 7, 10, 9, 6, 7, 6, 5, 6, 8, 1, 6, 6, 3, 2, 3, 5, 4, 5, 2, 2, 2, 3, 2, 4, 3, 1, 1, 1, 3, 2, 2, 3, 5, 2, 5)
+} else if(scenario == "4_8")
+{
+	columnSums <- rowSums <- c(rep(4, 4), rep(8, 8))
+} else if(scenario == "2_10")
+{
+	columnSums <- rowSums <- c(rep(2, 2), rep(10, 10))
 } else
 {
 	stop("Unknown scenario")
@@ -45,6 +51,15 @@ if(method == "CP")
 	while(counter < replications + 1)
 	{
 		results[[counter]] <- withoutReplacement(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+} else if(method == "WOR-SS")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- withoutReplacementSingleStep(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
 		save(results, file = tmpFile)
 		file.rename(from = tmpFile, to = outputFile)
 		counter <- counter + 1

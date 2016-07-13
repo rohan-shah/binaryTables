@@ -35,8 +35,11 @@ varianceFunc <- function(x)
 	{
 		#There is no var for Rmpfr objects unfortunately. 
 		values <- do.call(c, lapply(x, function(y) y@estimate))
-		secondMoment <- mean(values*values)
-		return(secondMoment - mean(values)^2)
+		values <- mpfr(values, prec = 3*getPrec(values[1]))
+		total <- sum(values)
+
+		totalSquared <- sum(values*values)
+		return(totalSquared / length(values) - (total / length(values))^2)
 	}
 }
 variances <- do.call(c, lapply(allResults, varianceFunc))
