@@ -8,12 +8,22 @@
 #include "crudeMC.h"
 #include "exhaustiveSearch.h"
 #include "conditionalPoissonBinaryTables.h"
+#include "setDefaultPrec.h"
+#include "withoutReplacement.h"
+#include "withoutReplacementMerging.h"
+#include "calculateConditionalPoissonDensity.h"
+#include "withoutReplacementSingleStep.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
 	{"crudeMC", (DL_FUNC)&binaryTables::crudeMC, 4},
 	{"exhaustiveSearch", (DL_FUNC)&binaryTables::exhaustiveSearch, 2}, 
-	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoisson, 4},
+	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoisson, 5},
+	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 5},
+	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
+	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
+	{"calculateConditionalPoissonDensity", (DL_FUNC)&binaryTables::calculateConditionalPoissonDensity, 1},
+	{"withoutReplacementSingleStep", (DL_FUNC)&binaryTables::withoutReplacementSingleStep, 4},
 	{NULL, NULL, 0}
 };
 RcppExport void R_init_binaryTables(DllInfo *info)

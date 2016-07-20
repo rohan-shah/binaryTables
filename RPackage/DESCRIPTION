@@ -17,3 +17,8 @@ Collate:
 	'crudeMC.R'
 	'exhaustiveSearch.R'
 	'conditionalPoisson.R'
+	'withoutReplacement.R'
+	'withoutReplacementSingleStep.R'
+	'classes.R'
+	'withoutReplacementMerging.R'
+	'calculateConditionalPoissonDensity.R'
