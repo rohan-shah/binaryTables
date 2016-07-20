@@ -187,7 +187,7 @@ namespace binaryTables
 						withoutReplacementSample& parentSample = samples[choicesUp[i]];
 						std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + outputCounter * nRows);
 						int newSkipped = parentSample.skipped, newDeterministic = parentSample.nRemainingDeterministic;
-						if(sampleRowSums[nRows * parentIndex + row] == (int)nColumns - column || parentSample.deterministicInclusion[row])
+						if(parentSample.deterministicInclusion[row])
 						{
 							selectionProb = 1;
 							newSkipped++;
@@ -203,15 +203,16 @@ namespace binaryTables
 						}
 						newSampleRowSums[nRows * outputCounter + row]--;
 						newSamples.push_back(withoutReplacementSample(parentSample.columnSum + 1, parentSample.sizeVariable * selectionProb, parentSample.productInclusionProbabilities, parentSample.totalRemaining - 1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
-						newSamples.back().skipped = newSkipped;
-						newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
-						newSamples.back().nRemainingDeterministic = newDeterministic;
+						withoutReplacementSample& newSample = newSamples.back();
+						newSample.skipped = newSkipped;
+						newSample.nRemainingZeros = parentSample.nRemainingZeros;
+						newSample.nRemainingDeterministic = newDeterministic;
 						if(args.keepTables)
 						{
-							newSamples.back().table = parentSample.table;
-							newSamples.back().table[column*nRows + row] = true;
+							newSample.table = parentSample.table;
+							newSample.table[column*nRows + row] = true;
 						}
-						newSamples.back().deterministicInclusion = parentSample.deterministicInclusion;
+						newSample.deterministicInclusion = parentSample.deterministicInclusion;
 						outputCounter++;
 					}
 					for(std::size_t i = 0; i < choicesDown.size(); i++)
@@ -223,7 +224,6 @@ namespace binaryTables
 						if(parentSample.columnSum == initialColumnSums[column] - parentSample.nRemainingDeterministic || newSampleRowSums[outputCounter * nRows + row] == 0)
 						{
 							selectionProb = 0;
-							newSkipped++;
 						}
 						else if(parentSample.columnSum == initialColumnSums[column] - 1 - parentSample.nRemainingDeterministic)
 						{
@@ -234,16 +234,21 @@ namespace binaryTables
 							selectionProb = (*parentSample.expExponentialParameters)[row] * (*parentSample.expNormalisingConstants)(row+1 - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 2 - parentSample.nRemainingDeterministic) / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 1 - parentSample.nRemainingDeterministic);
 						}
 						newSamples.push_back(withoutReplacementSample(parentSample.columnSum, parentSample.sizeVariable * (1 - selectionProb), parentSample.productInclusionProbabilities, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
-						newSamples.back().skipped = newSkipped;
-						newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
-						newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
-						if(newSampleRowSums[outputCounter * nRows + row] == 0) newSamples.back().nRemainingZeros--;
+						withoutReplacementSample& newSample = newSamples.back();
+						newSample.nRemainingZeros = parentSample.nRemainingZeros;
+						newSample.nRemainingDeterministic = parentSample.nRemainingDeterministic;
+						if(newSampleRowSums[outputCounter * nRows + row] == 0)
+						{
+							newSample.nRemainingZeros--;
+							newSkipped++;
+						}
+						newSample.skipped = newSkipped;
 						if(args.keepTables)
 						{
-							newSamples.back().table = parentSample.table;
-							newSamples.back().table[column*nRows + row] = false;
+							newSample.table = parentSample.table;
+							newSample.table[column*nRows + row] = false;
 						}
-						newSamples.back().deterministicInclusion = parentSample.deterministicInclusion;
+						newSample.deterministicInclusion = parentSample.deterministicInclusion;
 						outputCounter++;
 					}
 				}
@@ -255,7 +260,7 @@ namespace binaryTables
 					{
 						int parentIndex = choicesUp[i];
 						withoutReplacementSample& parentSample = samples[parentIndex];
-						if(sampleRowSums[nRows * parentIndex + row] == (int)nColumns - column)
+						if(parentSample.deterministicInclusion[row])
 						{
 							selectionProb = 1;
 						}
@@ -276,7 +281,7 @@ namespace binaryTables
 					{
 						int parentIndex = choicesDown[i];
 						withoutReplacementSample& parentSample = samples[parentIndex];
-						if(parentSample.columnSum == initialColumnSums[column] - parentSample.nRemainingDeterministic|| sampleRowSums[parentIndex*nRows + row] == 0)
+						if(parentSample.columnSum == initialColumnSums[column] - parentSample.nRemainingDeterministic || sampleRowSums[parentIndex*nRows + row] == 0)
 						{
 							selectionProb = 0;
 						}
@@ -304,17 +309,21 @@ namespace binaryTables
 							withoutReplacementSample& parentSample = samples[parentIndex];
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
 							newSamples.push_back(withoutReplacementSample(parentSample.columnSum, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
-							newSamples.back().skipped = parentSample.skipped;
-							newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
-							newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
-							if(sampleRowSums[parentIndex*nRows + row] == 0) newSamples.back().nRemainingZeros--;
-							if(parentSample.columnSum == initialColumnSums[column] || sampleRowSums[parentIndex*nRows + row] == 0) newSamples.back().skipped++;
+							withoutReplacementSample& newSample = newSamples.back();
+							newSample.skipped = parentSample.skipped;
+							newSample.nRemainingZeros = parentSample.nRemainingZeros;
+							newSample.nRemainingDeterministic = parentSample.nRemainingDeterministic;
+							if(sampleRowSums[parentIndex*nRows + row] == 0)
+							{	
+								newSample.nRemainingZeros--;
+								newSample.skipped++;
+							}
 							if(args.keepTables)
 							{
-								newSamples.back().table = parentSample.table;
-								newSamples.back().table[column*nRows + row] = false;
+								newSample.table = parentSample.table;
+								newSample.table[column*nRows + row] = false;
 							}
-							newSamples.back().deterministicInclusion = parentSample.deterministicInclusion;
+							newSample.deterministicInclusion = parentSample.deterministicInclusion;
 						}
 						else
 						{
@@ -323,20 +332,21 @@ namespace binaryTables
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
 							newSampleRowSums[i*nRows + row]--;
 							newSamples.push_back(withoutReplacementSample(parentSample.columnSum+1, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining-1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
-							newSamples.back().skipped = parentSample.skipped;
-							newSamples.back().nRemainingZeros = parentSample.nRemainingZeros;
-							newSamples.back().nRemainingDeterministic = parentSample.nRemainingDeterministic;
-							if(sampleRowSums[nRows * parentIndex + row] == (int)nColumns - column || parentSample.deterministicInclusion[row])
+							withoutReplacementSample& newSample = newSamples.back();
+							newSample.skipped = parentSample.skipped;
+							newSample.nRemainingZeros = parentSample.nRemainingZeros;
+							newSample.nRemainingDeterministic = parentSample.nRemainingDeterministic;
+							if(parentSample.deterministicInclusion[row])
 							{
-								newSamples.back().skipped++;
-								newSamples.back().nRemainingDeterministic--;
+								newSample.skipped++;
+								newSample.nRemainingDeterministic--;
 							}
 							if(args.keepTables)
 							{
-								newSamples.back().table = parentSample.table;
-								newSamples.back().table[column*nRows + row] = true;
+								newSample.table = parentSample.table;
+								newSample.table[column*nRows + row] = true;
 							}
-							newSamples.back().deterministicInclusion = parentSample.deterministicInclusion;
+							newSample.deterministicInclusion = parentSample.deterministicInclusion;
 						}
 					}
 				}
