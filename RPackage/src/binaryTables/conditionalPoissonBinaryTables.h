@@ -3,6 +3,6 @@
 #include <Rcpp.h>
 namespace binaryTables
 {
-	SEXP conditionalPoisson(SEXP rowSums, SEXP columnSums, SEXP n, SEXP seed);
+	SEXP conditionalPoisson(SEXP rowSums, SEXP columnSums, SEXP n, SEXP seed, SEXP keepTables);
 }
 #endif

@@ -13,9 +13,16 @@ namespace binaryTables
 		std::vector<mpfr_class>& samplingWeights = samplingArgs.weights;
 
 		std::size_t nColumns = columnSums.size(), nRows = rowSums.size();
-		GayleRyserTestWorking working(true);
+		GayleRyserTestWorking working(false);
 
 		std::vector<int>& indices = samplingArgs.indices;
+
+		if(args.keepTables)
+		{
+			args.tables.clear();
+			args.tables.reserve(n * nRows*nColumns);
+		}
+		std::vector<bool> currentTable(nRows*nColumns);
 
 		std::vector<int> currentRowSums(nRows);
 		std::vector<int> currentColumnSums(nColumns);
@@ -26,6 +33,7 @@ namespace binaryTables
 			mpfr_class density = 1;
 			std::copy(rowSums.begin(), rowSums.end(), currentRowSums.begin());
 			std::copy(columnSums.begin(), columnSums.end(), currentColumnSums.begin());
+			std::fill(currentTable.begin(), currentTable.end(), false);
 			for(std::size_t column = 0; column < nColumns; column++)
 			{
 				samplingArgs.n = currentColumnSums[column];
@@ -45,6 +53,7 @@ namespace binaryTables
 					}
 					else deterministicCount++;
 					currentRowSums[indices[j]]--;
+					currentTable[column*nRows + indices[j]] = true;
 				}
 				//If all the units are deterministic then we don't need to do anything. 
 				if(currentColumnSums[column] != deterministicCount)
@@ -63,6 +72,11 @@ namespace binaryTables
 			}
 			args.estimate += 1/density;
 			secondMoment += 1/(density*density);
+			if(args.keepTables)
+			{
+				args.tables.resize(args.tables.size() + nRows * nColumns);
+				std::copy(currentTable.begin(), currentTable.end(), args.tables.end() - nRows * nColumns);
+			}
 notValid:
 			;
 		}

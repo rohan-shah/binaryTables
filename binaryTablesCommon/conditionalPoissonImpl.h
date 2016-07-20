@@ -2,6 +2,7 @@
 #define CONDITIONAL_POISSON_IMPL_HEADER_GUARD
 #include "problem.h"
 #include "conditionalPoissonDrafting.h"
+#include "conditionalPoissonSequential.h"
 #include "includeMPFRBinaryTables.h"
 #include <boost/random/mersenne_twister.hpp>
 namespace binaryTables
@@ -17,8 +18,8 @@ namespace binaryTables
 		mpfr_class estimate, varianceEstimate;
 		sampling::conditionalPoissonDraftingArgs samplingArgs;
 		boost::mt19937 randomSource;
-	private:
-
+		bool keepTables;
+		std::vector<bool> tables;
 	};
 	void conditionalPoisson(conditionalPoissonArgs& args);
 }

@@ -2,6 +2,7 @@
 #include "conditionalPoissonSequential.h"
 #include "samplingBase.h"
 #include "GayleRyserTest.h"
+#include <boost/random/bernoulli_distribution.hpp>
 namespace binaryTables
 {
 	withoutReplacementSample::withoutReplacementSample(withoutReplacementSample&& other)
@@ -131,6 +132,20 @@ namespace binaryTables
 				samples[1].table.resize(nRows*nColumns);
 				samples[0].table[0] = true;
 				samples[1].table[0] = false;
+			}
+		}
+		if(args.n == 1)
+		{
+			if(samples.size() == 2)
+			{
+				mpfr_class sum = samples[0].sizeVariable + samples[1].sizeVariable;
+				boost::random::bernoulli_distribution<> bernoulli((samples[0].sizeVariable / sum).convert_to<double>());
+				if(bernoulli(args.randomSource) == 0)
+				{
+					std::swap(samples[0], samples[1]);
+					std::copy(sampleRowSums.begin()+nRows, sampleRowSums.end(), sampleRowSums.begin());
+				}
+				samples.pop_back();
 			}
 		}
 		for(std::size_t i = 0; i < samples.size(); i++)
@@ -298,7 +313,36 @@ namespace binaryTables
 #endif
 						args.samplingArgs.weights.push_back(parentSample.sizeVariable * (1 - selectionProb));
 					}
-					sampfordFromParetoNaive(args.samplingArgs, args.randomSource);
+					if(args.n == 1)
+					{
+						if(args.samplingArgs.weights.size() == 0)
+						{
+							throw std::runtime_error("Internal error");
+						}
+						else if(args.samplingArgs.weights.size() == 1)
+						{
+							args.samplingArgs.indices.clear();
+							args.samplingArgs.indices.push_back(0);
+							args.samplingArgs.rescaledWeights.clear();
+							args.samplingArgs.rescaledWeights.push_back(1);
+						}
+						else if(args.samplingArgs.weights.size() == 2)
+						{
+							mpfr_class sum = args.samplingArgs.weights[0] + args.samplingArgs.weights[1];
+							args.samplingArgs.indices.clear();
+							boost::random::bernoulli_distribution<> bernoulli((args.samplingArgs.weights[0] / sum).convert_to<double>());
+							if(bernoulli(args.randomSource)) args.samplingArgs.indices.push_back(0);
+							else args.samplingArgs.indices.push_back(1);
+
+							args.samplingArgs.rescaledWeights.clear();
+							args.samplingArgs.rescaledWeights.push_back(args.samplingArgs.weights[0] / sum);
+							args.samplingArgs.rescaledWeights.push_back(args.samplingArgs.weights[1] / sum);
+						}
+					}
+					else
+					{
+						sampfordFromParetoNaive(args.samplingArgs, args.randomSource);
+					}
 					for(std::size_t i = 0; i < n; i++)
 					{
 						int selected = args.samplingArgs.indices[i];
