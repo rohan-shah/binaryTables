@@ -310,6 +310,12 @@ namespace binaryTables
 				{
 					std::vector<bool> alreadySelected(samples.size(), false);
 					newSamples.clear();
+					//sort the sample row sums, to help us merge different samples
+					for(int i = 0; i < (int)samples.size(); i++)
+					{
+						std::sort(sampleRowSums.begin() + i * nRows, sampleRowSums.begin() + i * nRows + row + 1);
+						std::sort(sampleRowSums.begin() + i * nRows + row + 1, sampleRowSums.begin() + (i + 1) * nRows);
+					}
 					for(int i = 0; i < (int)samples.size(); i++)
 					{
 						if(!alreadySelected[i])
