@@ -27,20 +27,13 @@ varianceFunc <- function(x)
 	{
 		return(NA)
 	}
-	if(class(x[[1]]) == "conditionalPoissonResults")
-	{
-		return(as.numeric(mean(do.call(c, lapply(x, function(y) y@varianceEstimate)))))
-	}
-	else
-	{
-		#There is no var for Rmpfr objects unfortunately. 
-		values <- do.call(c, lapply(x, function(y) y@estimate))
-		values <- mpfr(values, prec = 3*getPrec(values[1]))
-		total <- sum(values)
+	#There is no var for Rmpfr objects unfortunately. 
+	values <- do.call(c, lapply(x, function(y) y@estimate))
+	values <- mpfr(values, prec = 3*getPrec(values))
+	total <- sum(values)
 
-		totalSquared <- sum(values*values)
-		return(totalSquared / length(values) - (total / length(values))^2)
-	}
+	totalSquared <- sum(values*values)
+	return(totalSquared / length(values) - (total / length(values))^2)
 }
 variances <- do.call(c, lapply(allResults, varianceFunc))
 workNormalizedVariance <- formatMpfr(variances * averageSecondsPerRun, digits = 10)

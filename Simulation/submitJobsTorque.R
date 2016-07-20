@@ -2,7 +2,7 @@ source("./generateScenarios.R")
 if(!file.exists("./results")) dir.create("results")
 if(!exists("maxJobs")) maxJobs <- nrow(scenarios)
 submittedJobs <- 0
-for(i in 24:nrow(scenarios))
+for(i in 1:nrow(scenarios))
 {
 	resultFile <- file.path("results", scenarios[i, "file"])
 	replications <- scenarios[i, "replications"]
