@@ -44,6 +44,7 @@ namespace binaryTables
 		//Extract data from args
 		std::vector<int>& sampleRowSums = args.sampleRowSums;
 		std::vector<int>& newSampleRowSums = args.newSampleRowSums;
+		std::vector<int> sortedSampleRowSums(nRows*std::max((std::size_t)2, n));
 		std::vector<withoutReplacementMergingSample>& samples = args.samples;
 		std::vector<withoutReplacementMergingSample>& newSamples = args.newSamples;
 		std::vector<mpfr_class> conditionalPoissonInclusionProbabilities;
@@ -310,11 +311,12 @@ namespace binaryTables
 				{
 					std::vector<bool> alreadySelected(samples.size(), false);
 					newSamples.clear();
-					//sort the sample row sums, to help us merge different samples
+					//sort the sample row sums, to help us merge different samples. We need to make copies so we avoid screwing up the link between the poisson sampling data and the row sums. 
+					std::copy(sampleRowSums.begin(), sampleRowSums.end(), sortedSampleRowSums.begin());
 					for(int i = 0; i < (int)samples.size(); i++)
 					{
-						std::sort(sampleRowSums.begin() + i * nRows, sampleRowSums.begin() + i * nRows + row + 1);
-						std::sort(sampleRowSums.begin() + i * nRows + row + 1, sampleRowSums.begin() + (i + 1) * nRows);
+						std::sort(sortedSampleRowSums.begin() + i * nRows, sortedSampleRowSums.begin() + i * nRows + row + 1);
+						std::sort(sortedSampleRowSums.begin() + i * nRows + row + 1, sortedSampleRowSums.begin() + (i + 1) * nRows);
 					}
 					for(int i = 0; i < (int)samples.size(); i++)
 					{
@@ -322,7 +324,7 @@ namespace binaryTables
 						{
 							for(int j = i+1; j < (int)samples.size(); j++)
 							{
-								if(samples[i].columnSum == samples[j].columnSum && memcmp(&(sampleRowSums[i*nRows]), &(sampleRowSums[j*nRows]), sizeof(int)*nRows) == 0)
+								if(samples[i].columnSum == samples[j].columnSum && memcmp(&(sortedSampleRowSums[i*nRows]), &(sortedSampleRowSums[j*nRows]), sizeof(int)*nRows) == 0)
 								{
 									samples[i].weight += samples[j].weight;
 									samples[i].sizeVariable += samples[j].sizeVariable;

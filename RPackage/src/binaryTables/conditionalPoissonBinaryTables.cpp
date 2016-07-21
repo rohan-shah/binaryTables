@@ -2,7 +2,7 @@
 #include "conditionalPoissonImpl.h"
 namespace binaryTables
 {
-	SEXP conditionalPoisson(SEXP rowSums_sexp, SEXP columnSums_sexp, SEXP n_sexp, SEXP seed_sexp, SEXP keepTables_sexp)
+	SEXP conditionalPoissonR(SEXP rowSums_sexp, SEXP columnSums_sexp, SEXP n_sexp, SEXP seed_sexp, SEXP keepTables_sexp)
 	{
 	BEGIN_RCPP
 		std::vector<int> rowSums = Rcpp::as<std::vector<int> >(rowSums_sexp);
@@ -21,7 +21,7 @@ namespace binaryTables
 		args.n = (std::size_t)n;
 		args.randomSource.seed(seed);
 		args.keepTables = keepTables;
-		conditionalPoisson(args);
+		conditionalPoissonImpl(args);
 		
 		Rcpp::List retVal = Rcpp::List::create(Rcpp::Named("estimate") = args.estimate.str(), Rcpp::Named("varianceEstimate") = args.varianceEstimate.str(), Rcpp::Named("tables") = Rcpp::List(0));
 		if(keepTables)
