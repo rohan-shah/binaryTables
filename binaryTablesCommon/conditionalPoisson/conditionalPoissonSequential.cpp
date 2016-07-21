@@ -43,8 +43,6 @@ namespace binaryTables
 		void conditionalPoissonSequential(conditionalPoissonSequentialArgs& args, boost::mt19937& randomSource, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns)
 		{
 			std::vector<int>& indices = args.indices;
-			std::vector<bool>& zeroWeights = args.zeroWeights;
-			std::vector<bool>& deterministicInclusion = args.deterministicInclusion;
 			int nUnits = (int)std::distance(rowSumsBegin, rowSumsEnd);
 			
 			int nDeterministic, nZeroWeights;

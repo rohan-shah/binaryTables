@@ -2,6 +2,9 @@
 #include "conditionalPoissonSequential.h"
 #include "samplingBase.h"
 #include "GayleRyserTest.h"
+#include "conditionalPoisson/conditionalPoissonSequential.h"
+#include "conditionalPoisson/computeExponentialParameters.h"
+#include "conditionalPoisson/calculateExpNormalisingConstants.h"
 namespace binaryTables
 {
 	withoutReplacementMergingSample::withoutReplacementMergingSample(withoutReplacementMergingSample&& other)
@@ -48,8 +51,9 @@ namespace binaryTables
 		std::vector<withoutReplacementMergingSample>& samples = args.samples;
 		std::vector<withoutReplacementMergingSample>& newSamples = args.newSamples;
 		std::vector<mpfr_class> conditionalPoissonInclusionProbabilities;
-		sampling::conditionalPoissonSequentialArgs cpSamplingArgs(true);
+		conditionalPoisson::conditionalPoissonSequentialArgs cpSamplingArgs;
 		cpSamplingArgs.n = initialColumnSums[0];
+		conditionalPoisson::exponentialPreCompute(cpSamplingArgs.preComputation, nColumns);
 
 /*		if(n < 2)
 		{
@@ -66,13 +70,11 @@ namespace binaryTables
 		newSamples.clear();
 		//We are going to perform conditional Poisson sampling using the sequential method. Se we need the selection probabilities. 
 		//This requires that we compute the exponentials of the normalising constants. 
-		cpSamplingArgs.weights.clear();
 		int nDeterministic = 0, nZeroWeights = 0;
-		for(std::size_t i = 0; i < nRows; i++) cpSamplingArgs.weights.push_back(initialRowSums[i]/(double)nColumns);
-		sampling::samplingBase(initialColumnSums[0], cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, nDeterministic, nZeroWeights);
+		conditionalPoisson::conditionalPoissonBase(cpSamplingArgs, initialRowSums.begin(), initialRowSums.end(), nColumns, nDeterministic, nZeroWeights);
 
-		computeExponentialParameters(cpSamplingArgs);
-		sampling::calculateExpNormalisingConstants(cpSamplingArgs);
+		conditionalPoisson::computeExponentialParameters(cpSamplingArgs, nColumns, initialRowSums.begin(), initialRowSums.end());
+		conditionalPoisson::calculateExpNormalisingConstants(cpSamplingArgs);
 		mpfr_class selectionProb;
 		if(initialRowSums[0] == 0)
 		{
@@ -362,18 +364,12 @@ namespace binaryTables
 						}
 						currentSample.columnSum = 0;
 						//Reset the inclusion probabilities for the conditional Poisson sampling
-						cpSamplingArgs.weights.clear();
 						cpSamplingArgs.n = initialColumnSums[column+1];
-						cpSamplingArgs.weights.insert(cpSamplingArgs.weights.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
-						for(std::vector<mpfr_class>::iterator i = cpSamplingArgs.weights.begin(); i != cpSamplingArgs.weights.end(); i++)
-						{
-							*i /= nColumns - (column+1);
-						}
 						currentSample.nRemainingDeterministic = 0;
 						currentSample.nRemainingZeros = 0;
-						sampling::samplingBase(cpSamplingArgs.n, cpSamplingArgs.indices, cpSamplingArgs.weights, cpSamplingArgs.zeroWeights, cpSamplingArgs.deterministicInclusion, currentSample.nRemainingDeterministic, currentSample.nRemainingZeros);
-						computeExponentialParameters(cpSamplingArgs);
-						calculateExpNormalisingConstants(cpSamplingArgs);
+						conditionalPoisson::conditionalPoissonBase(cpSamplingArgs, sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows, nColumns - (column + 1), currentSample.nRemainingDeterministic, currentSample.nRemainingZeros);
+						conditionalPoisson::computeExponentialParameters(cpSamplingArgs, nColumns - (column + 1), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+						conditionalPoisson::calculateExpNormalisingConstants(cpSamplingArgs);
 
 						currentSample.skipped = 0;
 						currentSample.deterministicInclusion = cpSamplingArgs.deterministicInclusion;
