@@ -7,14 +7,15 @@ namespace binaryTables
 {
 	namespace conditionalPoisson
 	{
-		void conditionalPoissonSequential(conditionalPoissonSequentialArgs& args, boost::mt19937& randomSource, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns)
+		void conditionalPoissonBase(conditionalPoissonSequentialArgs& args, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns, int& nDeterministic, int& nZeroWeights)
 		{
 			std::vector<int>& indices = args.indices;
 			std::vector<bool>& zeroWeights = args.zeroWeights;
 			std::vector<bool>& deterministicInclusion = args.deterministicInclusion;
 			int nUnits = (int)std::distance(rowSumsBegin, rowSumsEnd);
 			indices.clear();
-			int nZeroWeights = 0, nDeterministic = 0;
+			nZeroWeights = 0;
+			nDeterministic = 0;
 			
 			zeroWeights.resize(nUnits);
 			deterministicInclusion.resize(nUnits);
@@ -38,6 +39,16 @@ namespace binaryTables
 				}
 				else remaining.push_back(i);
 			}
+		}
+		void conditionalPoissonSequential(conditionalPoissonSequentialArgs& args, boost::mt19937& randomSource, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns)
+		{
+			std::vector<int>& indices = args.indices;
+			std::vector<bool>& zeroWeights = args.zeroWeights;
+			std::vector<bool>& deterministicInclusion = args.deterministicInclusion;
+			int nUnits = (int)std::distance(rowSumsBegin, rowSumsEnd);
+			
+			int nDeterministic, nZeroWeights;
+			conditionalPoissonBase(args, rowSumsBegin, rowSumsEnd, nRemainingColumns, nDeterministic, nZeroWeights);
 
 			computeExponentialParameters(args, nRemainingColumns, rowSumsBegin, rowSumsEnd); 
 			calculateExpNormalisingConstants(args);

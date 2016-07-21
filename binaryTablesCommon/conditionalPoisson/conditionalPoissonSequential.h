@@ -33,6 +33,7 @@ namespace binaryTables
 			conditionalPoissonSequentialArgs(const conditionalPoissonSequentialArgs& other);
 			conditionalPoissonSequentialArgs& operator=(const conditionalPoissonSequentialArgs& other);
 		};
+		void conditionalPoissonBase(conditionalPoissonSequentialArgs& args, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns, int& nDeterministic, int& nZeroWeights);
 		void conditionalPoissonSequential(conditionalPoissonSequentialArgs& args, boost::mt19937& randomSource, std::vector<int>::const_iterator rowSumsBegin, std::vector<int>::const_iterator rowSumsEnd, int nRemainingColumns);
 	}
 }
