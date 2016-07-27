@@ -50,6 +50,7 @@ namespace binaryTables
 
 			computeExponentialParameters(args, nRemainingColumns, rowSumsBegin, rowSumsEnd); 
 			calculateExpNormalisingConstants(args);
+			if(indices.size() == args.n) return;
 			int chosen = 0;
 			int skipped = 0;
 			for(int i = 0; i < nUnits; i++)
