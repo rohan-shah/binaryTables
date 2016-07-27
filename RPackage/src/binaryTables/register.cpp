@@ -13,12 +13,14 @@
 #include "withoutReplacementMerging.h"
 #include "calculateConditionalPoissonDensity.h"
 #include "withoutReplacementSingleStep.h"
+#include "conditionalPoissonBootstrapBinaryTables.h"
 extern "C" const char* package_name = "binaryTables";
 R_CallMethodDef callMethods[] = 
 {
 	{"crudeMC", (DL_FUNC)&binaryTables::crudeMC, 4},
 	{"exhaustiveSearch", (DL_FUNC)&binaryTables::exhaustiveSearch, 2}, 
 	{"conditionalPoisson", (DL_FUNC)&binaryTables::conditionalPoissonR, 5},
+	{"conditionalPoissonBootstrap", (DL_FUNC)&binaryTables::conditionalPoissonBootstrap, 4},
 	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 5},
 	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
