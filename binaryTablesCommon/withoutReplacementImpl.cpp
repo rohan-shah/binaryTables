@@ -9,7 +9,7 @@
 namespace binaryTables
 {
 	withoutReplacementSample::withoutReplacementSample(withoutReplacementSample&& other)
-		: columnSum(other.columnSum), sizeVariable(std::move(other.sizeVariable)), productInclusionProbabilities(std::move(other.productInclusionProbabilities)), totalRemaining(other.totalRemaining), expNormalisingConstants(other.expNormalisingConstants), expExponentialParameters(other.expExponentialParameters), skipped(other.skipped), nRemainingZeros(other.nRemainingZeros), nRemainingDeterministic(other.nRemainingDeterministic), table(std::move(other.table)), deterministicInclusion(std::move(other.deterministicInclusion))
+		: columnSum(other.columnSum), sizeVariable(std::move(other.sizeVariable)), productInclusionProbabilities(std::move(other.productInclusionProbabilities)), expNormalisingConstants(other.expNormalisingConstants), expExponentialParameters(other.expExponentialParameters), skipped(other.skipped), nRemainingZeros(other.nRemainingZeros), nRemainingDeterministic(other.nRemainingDeterministic), table(std::move(other.table)), deterministicInclusion(std::move(other.deterministicInclusion))
 	{
 	}
 	withoutReplacementSample& withoutReplacementSample::operator=(withoutReplacementSample&& other)
@@ -17,7 +17,6 @@ namespace binaryTables
 		columnSum = other.columnSum;
 		sizeVariable = std::move(other.sizeVariable);
 		productInclusionProbabilities = std::move(other.productInclusionProbabilities);
-		totalRemaining = other.totalRemaining;
 		expNormalisingConstants = other.expNormalisingConstants;
 		expExponentialParameters = other.expExponentialParameters;
 		skipped = other.skipped;
@@ -34,10 +33,6 @@ namespace binaryTables
 		const std::vector<int>& initialColumnSums = problemObj.getColumnSums();
 		std::size_t nRows = initialRowSums.size(), nColumns = initialColumnSums.size();
 
-		//Count the total number of ones
-		int totalOnes = 0;
-		for(std::vector<int>::const_iterator i = initialRowSums.begin(); i != initialRowSums.end(); i++) totalOnes += *i;
-		
 		std::size_t n = args.n;
 
 		GayleRyserTestWorking gayleRyserTestWorking(true);
@@ -99,7 +94,7 @@ namespace binaryTables
 		if(initialRowSums[0] == 0)
 		{
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin());
-			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes, initialExpNormalisingConstantData, initialExpExponentialParameters));
+			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			samples[0].skipped = 1;
 			if(args.keepTables)
 			{
@@ -110,7 +105,7 @@ namespace binaryTables
 		else if(initialRowSums[0] == (int)nColumns)
 		{
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin());
-			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1, initialExpNormalisingConstantData, initialExpExponentialParameters));
+			samples.push_back(withoutReplacementSample(1, selectionProb, 1, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			sampleRowSums[0]--;
 			samples[0].skipped = 1;
 			if(args.keepTables)
@@ -125,8 +120,8 @@ namespace binaryTables
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin() + nRows);
 			sampleRowSums[0]--;
 			//The first sample has a one in the first column.
-			samples.push_back(withoutReplacementSample(1, selectionProb, 1, totalOnes-1, initialExpNormalisingConstantData, initialExpExponentialParameters));
-			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, totalOnes, initialExpNormalisingConstantData, initialExpExponentialParameters));
+			samples.push_back(withoutReplacementSample(1, selectionProb, 1, initialExpNormalisingConstantData, initialExpExponentialParameters));
+			samples.push_back(withoutReplacementSample(0, 1 - selectionProb, 1, initialExpNormalisingConstantData, initialExpExponentialParameters));
 			samples[0].skipped = samples[1].skipped = 0;
 			if(args.keepTables)
 			{
@@ -219,7 +214,7 @@ namespace binaryTables
 							selectionProb = (*parentSample.expExponentialParameters)[row] * (*parentSample.expNormalisingConstants)(row+1 - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 2 - parentSample.nRemainingDeterministic) / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 1 - parentSample.nRemainingDeterministic);
 						}
 						newSampleRowSums[nRows * outputCounter + row]--;
-						newSamples.push_back(withoutReplacementSample(parentSample.columnSum + 1, parentSample.sizeVariable * selectionProb, parentSample.productInclusionProbabilities, parentSample.totalRemaining - 1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
+						newSamples.push_back(withoutReplacementSample(parentSample.columnSum + 1, parentSample.sizeVariable * selectionProb, parentSample.productInclusionProbabilities,  parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 						withoutReplacementSample& newSample = newSamples.back();
 						newSample.skipped = newSkipped;
 						newSample.nRemainingZeros = parentSample.nRemainingZeros;
@@ -250,7 +245,7 @@ namespace binaryTables
 						{
 							selectionProb = (*parentSample.expExponentialParameters)[row] * (*parentSample.expNormalisingConstants)(row+1 - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 2 - parentSample.nRemainingDeterministic) / (*parentSample.expNormalisingConstants)(row - parentSample.skipped, initialColumnSums[column] - parentSample.columnSum - 1 - parentSample.nRemainingDeterministic);
 						}
-						newSamples.push_back(withoutReplacementSample(parentSample.columnSum, parentSample.sizeVariable * (1 - selectionProb), parentSample.productInclusionProbabilities, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
+						newSamples.push_back(withoutReplacementSample(parentSample.columnSum, parentSample.sizeVariable * (1 - selectionProb), parentSample.productInclusionProbabilities, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 						withoutReplacementSample& newSample = newSamples.back();
 						newSample.nRemainingZeros = parentSample.nRemainingZeros;
 						newSample.nRemainingDeterministic = parentSample.nRemainingDeterministic;
@@ -354,7 +349,7 @@ namespace binaryTables
 							int parentIndex = choicesDown[selected - choicesUp.size()];
 							withoutReplacementSample& parentSample = samples[parentIndex];
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
-							newSamples.push_back(withoutReplacementSample(parentSample.columnSum, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
+							newSamples.push_back(withoutReplacementSample(parentSample.columnSum, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 							withoutReplacementSample& newSample = newSamples.back();
 							newSample.skipped = parentSample.skipped;
 							newSample.nRemainingZeros = parentSample.nRemainingZeros;
@@ -377,7 +372,7 @@ namespace binaryTables
 							withoutReplacementSample& parentSample = samples[parentIndex];
 							std::copy(sampleRowSums.begin() + nRows * parentIndex, sampleRowSums.begin() + nRows * (parentIndex+1), newSampleRowSums.begin() + i * nRows);
 							newSampleRowSums[i*nRows + row]--;
-							newSamples.push_back(withoutReplacementSample(parentSample.columnSum+1, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.totalRemaining-1, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
+							newSamples.push_back(withoutReplacementSample(parentSample.columnSum+1, args.samplingArgs.weights[selected] / inclusionProbability, parentSample.productInclusionProbabilities * inclusionProbability, parentSample.expNormalisingConstants, parentSample.expExponentialParameters));
 							withoutReplacementSample& newSample = newSamples.back();
 							newSample.skipped = parentSample.skipped;
 							newSample.nRemainingZeros = parentSample.nRemainingZeros;
