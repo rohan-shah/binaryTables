@@ -23,3 +23,4 @@ Collate:
 	'withoutReplacementMerging.R'
 	'calculateConditionalPoissonDensity.R'
 	'conditionalPoissonBootstrap.R'
+	'conditionalPoissonBootstrapMerging.R'
