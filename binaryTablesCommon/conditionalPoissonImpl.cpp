@@ -22,6 +22,8 @@ namespace binaryTables
 		{
 			args.tables.clear();
 			args.tables.reserve(n * nRows*nColumns);
+			args.tableWeights.clear();
+			args.tableWeights.reserve(n);
 		}
 		std::vector<bool> currentTable(nRows*nColumns);
 
@@ -72,6 +74,7 @@ namespace binaryTables
 			{
 				args.tables.resize(args.tables.size() + nRows * nColumns);
 				std::copy(currentTable.begin(), currentTable.end(), args.tables.end() - nRows * nColumns);
+				args.tableWeights.push_back(density);
 			}
 notValid:
 			;

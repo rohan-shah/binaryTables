@@ -10,7 +10,7 @@ namespace binaryTables
 	{
 	public:
 		conditionalPoissonArgs(problem& problemObj)
-			: problemObj(problemObj)
+			: problemObj(problemObj), keepTables(false)
 		{}
 		std::size_t n;
 		problem& problemObj;
@@ -19,6 +19,7 @@ namespace binaryTables
 		boost::mt19937 randomSource;
 		bool keepTables;
 		std::vector<bool> tables;
+		std::vector<mpfr_class> tableWeights;
 	};
 	void conditionalPoissonImpl(conditionalPoissonArgs& args);
 }
