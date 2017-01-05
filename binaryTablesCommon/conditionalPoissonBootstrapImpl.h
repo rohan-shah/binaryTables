@@ -4,6 +4,7 @@
 #include "includeMPFRBinaryTables.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/random/mersenne_twister.hpp>
+#include <boost/shared_ptr.hpp>
 namespace binaryTables
 {
 	struct conditionalPoissonBootstrapSample

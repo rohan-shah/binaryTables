@@ -4,6 +4,7 @@
 #include "problem.h"
 #include "includeMPFRBinaryTables.h"
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/shared_ptr.hpp>
 namespace binaryTables
 {
 	struct withoutReplacementMergingSample
