@@ -22,3 +22,5 @@ Collate:
 	'classes.R'
 	'withoutReplacementMerging.R'
 	'calculateConditionalPoissonDensity.R'
+	'conditionalPoissonBootstrap.R'
+	'conditionalPoissonBootstrapMerging.R'

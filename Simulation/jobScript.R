@@ -46,6 +46,33 @@ if(method == "CP")
 		file.rename(from = tmpFile, to = outputFile)
 		counter <- counter + 1
 	}
+} else if(method == "CP-Bootstrap")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- conditionalPoissonBootstrap(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+} else if(method == "CP-Bootstrap-Merge1")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- conditionalPoissonBootstrapMerging(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize, mergeFrequency = 1)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
+} else if(method == "CP-Bootstrap-Merge2")
+{
+	while(counter < replications + 1)
+	{
+		results[[counter]] <- conditionalPoissonBootstrapMerging(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize, mergeFrequency = 2)
+		save(results, file = tmpFile)
+		file.rename(from = tmpFile, to = outputFile)
+		counter <- counter + 1
+	}
 } else if(method == "WOR")
 {
 	while(counter < replications + 1)

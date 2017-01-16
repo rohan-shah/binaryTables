@@ -1,18 +1,19 @@
 #include "conditionalPoissonImpl.h"
 #include "GayleRyserTest.h"
 #include <boost/math/special_functions/binomial.hpp>
+#include "conditionalPoisson/computeExponentialParameters.h"
 namespace binaryTables
 {
-	void conditionalPoisson(conditionalPoissonArgs& args)
+	void conditionalPoissonImpl(conditionalPoissonArgs& args)
 	{
 		std::size_t n = args.n;
 		problem& problemObj = args.problemObj;
 		const std::vector<int>& rowSums = problemObj.getRowSums();
 		const std::vector<int>& columnSums = problemObj.getColumnSums();
-		sampling::conditionalPoissonDraftingArgs& samplingArgs = args.samplingArgs;
-		std::vector<mpfr_class>& samplingWeights = samplingArgs.weights;
+		conditionalPoisson::conditionalPoissonSequentialArgs& samplingArgs = args.samplingArgs;
 
 		std::size_t nColumns = columnSums.size(), nRows = rowSums.size();
+		conditionalPoisson::exponentialPreCompute(samplingArgs.preComputation, nColumns);
 		GayleRyserTestWorking working(false);
 
 		std::vector<int>& indices = samplingArgs.indices;
@@ -21,6 +22,8 @@ namespace binaryTables
 		{
 			args.tables.clear();
 			args.tables.reserve(n * nRows*nColumns);
+			args.tableWeights.clear();
+			args.tableWeights.reserve(n);
 		}
 		std::vector<bool> currentTable(nRows*nColumns);
 
@@ -37,12 +40,7 @@ namespace binaryTables
 			for(std::size_t column = 0; column < nColumns; column++)
 			{
 				samplingArgs.n = currentColumnSums[column];
-				samplingWeights.clear();
-				for(std::size_t row = 0; row < nRows; row++)
-				{
-					samplingWeights.push_back(currentRowSums[row] / (double)(nColumns - column));
-				}
-				conditionalPoissonDrafting(samplingArgs, args.randomSource);
+				conditionalPoisson::conditionalPoissonSequential(samplingArgs, args.randomSource, currentRowSums.begin(), currentRowSums.end(), nColumns - column);
 				std::sort(indices.begin(), indices.end());
 				int deterministicCount = 0;
 				for(int j = 0; j < currentColumnSums[column]; j++)
@@ -76,6 +74,7 @@ namespace binaryTables
 			{
 				args.tables.resize(args.tables.size() + nRows * nColumns);
 				std::copy(currentTable.begin(), currentTable.end(), args.tables.end() - nRows * nColumns);
+				args.tableWeights.push_back(density);
 			}
 notValid:
 			;

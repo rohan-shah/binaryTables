@@ -4,19 +4,19 @@
 #include "problem.h"
 #include "includeMPFRBinaryTables.h"
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/shared_ptr.hpp>
 namespace binaryTables
 {
 	struct withoutReplacementSample
 	{
-		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, int totalRemaining, boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants, boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters)
-			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), totalRemaining(totalRemaining), expNormalisingConstants(expNormalisingConstants), expExponentialParameters(expExponentialParameters)
+		withoutReplacementSample(int columnSum, mpfr_class sizeVariable, mpfr_class productInclusionProbabilities, boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants, boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters)
+			:columnSum(columnSum), sizeVariable(sizeVariable), productInclusionProbabilities(productInclusionProbabilities), expNormalisingConstants(expNormalisingConstants), expExponentialParameters(expExponentialParameters)
 		{}
 		withoutReplacementSample(withoutReplacementSample&& other);
 		withoutReplacementSample& operator=(withoutReplacementSample&& other);
 		int columnSum;
 		mpfr_class sizeVariable;
 		mpfr_class productInclusionProbabilities;
-		int totalRemaining;
 		boost::shared_ptr<boost::numeric::ublas::matrix<mpfr_class> > expNormalisingConstants;
 		boost::shared_ptr<std::vector<mpfr_class> > expExponentialParameters;
 		int skipped;

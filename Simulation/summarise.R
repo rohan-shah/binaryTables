@@ -18,7 +18,10 @@ averageEstimatesFunc <- function(x)
 	{
 		return(NA)
 	}
-	return(mean(do.call(c, lapply(x, function(y) y@estimate))))
+	values <- do.call(c, lapply(x, function(y) y@estimate))
+	values <- mpfr(values, prec = 3*getPrec(values))
+	total <- sum(values)
+	return(total/length(values))
 }
 averageEstimates <- do.call(c, lapply(allResults, averageEstimatesFunc))
 varianceFunc <- function(x)
