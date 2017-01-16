@@ -139,7 +139,7 @@ namespace binaryTables
 			if(samples.size() == 2)
 			{
 				mpfr_class sum = samples[0].sizeVariable + samples[1].sizeVariable;
-				boost::random::bernoulli_distribution<> bernoulli((samples[0].sizeVariable / sum).convert_to<double>());
+				boost::random::bernoulli_distribution<> bernoulli(mpfr_class(samples[0].sizeVariable / sum).convert_to<double>());
 				if(bernoulli(args.randomSource) == 0)
 				{
 					std::swap(samples[0], samples[1]);
@@ -330,7 +330,7 @@ namespace binaryTables
 						{
 							mpfr_class sum = args.samplingArgs.weights[0] + args.samplingArgs.weights[1];
 							args.samplingArgs.indices.clear();
-							boost::random::bernoulli_distribution<> bernoulli((args.samplingArgs.weights[0] / sum).convert_to<double>());
+							boost::random::bernoulli_distribution<> bernoulli(mpfr_class(args.samplingArgs.weights[0] / sum).convert_to<double>());
 							if(bernoulli(args.randomSource)) args.samplingArgs.indices.push_back(0);
 							else args.samplingArgs.indices.push_back(1);
 
