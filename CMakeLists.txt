@@ -18,7 +18,7 @@ else()
 	set_target_properties(mpfr PROPERTIES IMPORTED_LOCATION ${mpfr_LIBRARY})
 endif()
 
-find_package(Boost 1.53.0 COMPONENTS graph REQUIRED)
+find_package(Boost 1.53.0 COMPONENTS graph regex system REQUIRED)
 find_package(sampling REQUIRED CONFIG)
 find_package(Rcpp REQUIRED)
 
