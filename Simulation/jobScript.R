@@ -21,12 +21,14 @@ if(scenario == "exact12x12")
 {
 	rowSums <- c(14, 14, 19, 18, 11, 12, 12, 10, 13, 16, 8, 12, 6, 15, 6, 7, 12, 1, 12, 3, 8, 5, 9, 4, 2, 4, 1, 4, 4, 5, 2, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 3, 3, 1, 3, 2, 1, 1, 1, 2)
 	columnSums <- c(14, 13, 14, 13, 13, 12, 14, 8, 11, 9, 10, 8, 9, 8, 4, 7, 10, 9, 6, 7, 6, 5, 6, 8, 1, 6, 6, 3, 2, 3, 5, 4, 5, 2, 2, 2, 3, 2, 4, 3, 1, 1, 1, 3, 2, 2, 3, 5, 2, 5)
-} else if(scenario == "4_8")
+} else if(scenario == "pathological_200")
 {
-	columnSums <- rowSums <- c(rep(4, 4), rep(8, 8))
-} else if(scenario == "2_10")
-{
-	columnSums <- rowSums <- c(rep(2, 2), rep(10, 10))
+	m <- 200
+	beta <- 0.6
+	gamma <- 0.7
+	n <- m + floor(beta*m) - floor(gamma*m)
+	columnSums <- c(rep(1, n), floor(gamma*m))
+	rowSums <- c(rep(1, n), floor(beta*m))
 } else
 {
 	stop("Unknown scenario")
@@ -46,33 +48,6 @@ if(method == "CP")
 		file.rename(from = tmpFile, to = outputFile)
 		counter <- counter + 1
 	}
-} else if(method == "CP-Bootstrap")
-{
-	while(counter < replications + 1)
-	{
-		results[[counter]] <- conditionalPoissonBootstrap(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
-		save(results, file = tmpFile)
-		file.rename(from = tmpFile, to = outputFile)
-		counter <- counter + 1
-	}
-} else if(method == "CP-Bootstrap-Merge1")
-{
-	while(counter < replications + 1)
-	{
-		results[[counter]] <- conditionalPoissonBootstrapMerging(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize, mergeFrequency = 1)
-		save(results, file = tmpFile)
-		file.rename(from = tmpFile, to = outputFile)
-		counter <- counter + 1
-	}
-} else if(method == "CP-Bootstrap-Merge2")
-{
-	while(counter < replications + 1)
-	{
-		results[[counter]] <- conditionalPoissonBootstrapMerging(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize, mergeFrequency = 2)
-		save(results, file = tmpFile)
-		file.rename(from = tmpFile, to = outputFile)
-		counter <- counter + 1
-	}
 } else if(method == "WOR")
 {
 	while(counter < replications + 1)
@@ -82,20 +57,12 @@ if(method == "CP")
 		file.rename(from = tmpFile, to = outputFile)
 		counter <- counter + 1
 	}
-} else if(method == "WOR-SS")
-{
-	while(counter < replications + 1)
-	{
-		results[[counter]] <- withoutReplacementSingleStep(columnSums = columnSums, rowSums = rowSums, seed = counter + 100000L*SCENARIO_INDEX, n = sampleSize)
-		save(results, file = tmpFile)
-		file.rename(from = tmpFile, to = outputFile)
-		counter <- counter + 1
-	}
-} else if(method %in% c("WOR-Merge1", "WOR-Merge50", "WOR-Merge12"))
+} else if(method %in% c("WOR-Merge1", "WOR-Merge50", "WOR-Merge12", "WOR-Merge200"))
 {
 	if(method == "WOR-Merge1") mergeFrequency <- 1
 	else if(method == "WOR-Merge50") mergeFrequency <- 50
 	else if(method == "WOR-Merge12") mergeFrequency <- 12
+	else if(method == "WOR-Merge200") mergeFrequency <- 200
 	else stop("Internal error")
 	while(counter < replications + 1)
 	{
