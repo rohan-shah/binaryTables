@@ -16,7 +16,7 @@ averageEstimatesFunc <- function(x)
 {
 	if(is.null(x))
 	{
-		return(NA)
+		return(mpfr(NA))
 	}
 	values <- do.call(c, lapply(x, function(y) y@estimate))
 	values <- mpfr(values, prec = 3*getPrec(values))
@@ -28,7 +28,7 @@ varianceFunc <- function(x)
 {
 	if(is.null(x))
 	{
-		return(NA)
+		return(mpfr(NA))
 	}
 	#There is no var for Rmpfr objects unfortunately. 
 	values <- do.call(c, lapply(x, function(y) y@estimate))

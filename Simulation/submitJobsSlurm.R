@@ -2,7 +2,7 @@ source("./generateScenarios.R")
 if(!file.exists("./results")) dir.create("results")
 if(!exists("maxJobs")) maxJobs <- nrow(scenarios)
 submittedJobs <- 0
-for(i in 1:nrow(scenarios))
+for(i in 12:nrow(scenarios))
 {
 	submit <- TRUE
 	resultFile <- file.path("results", scenarios[i, "file"])
@@ -11,7 +11,7 @@ for(i in 1:nrow(scenarios))
 	else
 	{
 		load(resultFile)
-		if(length(results) != scenarios[i, "nReps"]) shouldSubmit <- TRUE
+		if(length(results) != scenarios[i, "replications"]) shouldSubmit <- TRUE
 	}
 	if(shouldSubmit)
 	{
