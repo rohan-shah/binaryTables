@@ -1,0 +1,8 @@
+#ifndef WITHOUT_REPLACEMENT_WITH_VARIANCE_MERGING_BINARY_TABLES_R_PACKAGE_HEADER_GUARD
+#define WITHOUT_REPLACEMENT_WITH_VARIANCE_MERGING_BINARY_TABLES_R_PACKAGE_HEADER_GUARD
+#include <Rcpp.h>
+namespace binaryTables
+{
+	SEXP withoutReplacementMergingWithVariance(SEXP rowSums, SEXP columnSums, SEXP n, SEXP seed);
+}
+#endif

@@ -11,6 +11,7 @@
 #include "setDefaultPrec.h"
 #include "withoutReplacement.h"
 #include "withoutReplacementMerging.h"
+#include "withoutReplacementMergingWithVariance.h"
 #include "calculateConditionalPoissonDensity.h"
 #include "withoutReplacementSingleStep.h"
 #include "conditionalPoissonBootstrapBinaryTables.h"
@@ -25,6 +26,7 @@ R_CallMethodDef callMethods[] =
 	{"conditionalPoissonBootstrapMerging", (DL_FUNC)&binaryTables::conditionalPoissonBootstrapMerging, 5},
 	{"withoutReplacement", (DL_FUNC)&binaryTables::withoutReplacement, 5},
 	{"withoutReplacementMerging", (DL_FUNC)&binaryTables::withoutReplacementMerging, 5},
+	{"withoutReplacementMergingWithVariance", (DL_FUNC)&binaryTables::withoutReplacementMergingWithVariance, 4},
 	{"setDefaultPrec", (DL_FUNC)&binaryTables::setDefaultPrec, 1},
 	{"calculateConditionalPoissonDensity", (DL_FUNC)&binaryTables::calculateConditionalPoissonDensity, 1},
 	{"withoutReplacementSingleStep", (DL_FUNC)&binaryTables::withoutReplacementSingleStep, 4},

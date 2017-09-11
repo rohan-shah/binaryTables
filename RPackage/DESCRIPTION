@@ -20,6 +20,7 @@ Collate:
 	'withoutReplacement.R'
 	'withoutReplacementSingleStep.R'
 	'classes.R'
+	'withoutReplacementMergingWithVariance.R'
 	'withoutReplacementMerging.R'
 	'calculateConditionalPoissonDensity.R'
 	'conditionalPoissonBootstrap.R'
