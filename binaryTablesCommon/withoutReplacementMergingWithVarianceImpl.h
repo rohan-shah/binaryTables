@@ -18,7 +18,7 @@ namespace binaryTables
 		withoutReplacementMergingWithVarianceSample(withoutReplacementMergingWithVarianceSample&& other);
 		withoutReplacementMergingWithVarianceSample& operator=(withoutReplacementMergingWithVarianceSample&& other);
 		int columnSum;
-		int trueDensity;
+		double trueDensity;
 		mpfr_class importanceDensity;
 		mpfr_class weight;
 		int totalRemaining;
@@ -27,7 +27,8 @@ namespace binaryTables
 		int skipped;
 		int nRemainingZeros;
 		int nRemainingDeterministic;
-		int parentIndex;
+		int parentIndexWithinDesign;
+		int indexWithinDesign;
 		std::vector<bool> deterministicInclusion;
 	};
 	struct withoutReplacementMergingWithVarianceArgs

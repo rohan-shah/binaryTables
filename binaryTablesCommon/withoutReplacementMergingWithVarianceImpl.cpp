@@ -6,10 +6,12 @@
 #include "conditionalPoisson/computeExponentialParameters.h"
 #include "conditionalPoisson/calculateExpNormalisingConstants.h"
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphml.hpp>
+#include <boost/graph/graphviz.hpp>
 namespace binaryTables
 {
 	withoutReplacementMergingWithVarianceSample::withoutReplacementMergingWithVarianceSample(withoutReplacementMergingWithVarianceSample&& other)
-		: columnSum(other.columnSum), trueDensity(other.trueDensity), importanceDensity(std::move(other.importanceDensity)), weight(std::move(other.weight)), totalRemaining(other.totalRemaining), expNormalisingConstants(other.expNormalisingConstants), expExponentialParameters(other.expExponentialParameters), skipped(other.skipped), nRemainingZeros(other.nRemainingZeros), nRemainingDeterministic(other.nRemainingDeterministic), parentIndex(other.parentIndex), deterministicInclusion(std::move(other.deterministicInclusion))
+		: columnSum(other.columnSum), trueDensity(other.trueDensity), importanceDensity(std::move(other.importanceDensity)), weight(std::move(other.weight)), totalRemaining(other.totalRemaining), expNormalisingConstants(other.expNormalisingConstants), expExponentialParameters(other.expExponentialParameters), skipped(other.skipped), nRemainingZeros(other.nRemainingZeros), nRemainingDeterministic(other.nRemainingDeterministic), parentIndexWithinDesign(other.parentIndexWithinDesign), indexWithinDesign(other.indexWithinDesign), deterministicInclusion(std::move(other.deterministicInclusion)) 
 	{
 	}
 	withoutReplacementMergingWithVarianceSample& withoutReplacementMergingWithVarianceSample::operator=(withoutReplacementMergingWithVarianceSample&& other)
@@ -24,7 +26,8 @@ namespace binaryTables
 		skipped = other.skipped;
 		nRemainingZeros = other.nRemainingZeros;
 		nRemainingDeterministic = other.nRemainingDeterministic;
-		parentIndex = other.parentIndex;
+		parentIndexWithinDesign = other.parentIndexWithinDesign;
+		indexWithinDesign = other.indexWithinDesign;
 		deterministicInclusion = std::move(other.deterministicInclusion);
 		return *this;
 	}
@@ -32,14 +35,33 @@ namespace binaryTables
 	{
 	public:
 		varianceGraphVertex()
-			: indexWithinDesign(-1), samplingStage(-1), indexWithinSelected(-1), accumulatedMean(0), V(0)
+			: indexWithinDesign(-1), samplingStage(-1), indexWithinSelected(-1), trueDensity(-1), accumulatedMean(0), V(0)
 		{}
 		int indexWithinDesign;
 		int samplingStage;
 		int indexWithinSelected;
+		double trueDensity;
 		mutable mpfr_class accumulatedMean, V;
 	};
-	typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS, boost::property<boost::vertex_name_t, varianceGraphVertex>, boost::property<boost::edge_name_t, bool> > varianceGraph;
+	typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS, boost::property<boost::vertex_name_t, varianceGraphVertex> > varianceGraph;
+	class vertexPropertyWriter
+	{
+	public:
+		vertexPropertyWriter(const varianceGraph& g)
+			:g(g)
+		{}
+		template<typename vertexDesc> void operator()(std::ostream& out, const vertexDesc& v)
+		{
+			const varianceGraphVertex& vertexInfo = boost::get(boost::vertex_name, g, v);
+			out << std::endl << "[trueDensity=\"" << vertexInfo.trueDensity << "\"";
+			out << ",accumulatedMean=\"" << vertexInfo.accumulatedMean.convert_to<double>() << "\"";
+			out << ",indexWithinDesign=\"" << vertexInfo.indexWithinDesign << "\"";
+			out << ",samplingStage=\"" << vertexInfo.samplingStage << "\"";
+			out << ",V=\"" << vertexInfo.V.convert_to<double>() << "\"";
+			out << ",indexWithinSelected=\"" << vertexInfo.indexWithinSelected <<"\"]" << std::endl;
+		}
+		const varianceGraph& g;
+	};
 	void withoutReplacementMergingWithVariance(withoutReplacementMergingWithVarianceArgs& args)
 	{
 		problem& problemObj = args.problemObj;
@@ -80,6 +102,9 @@ namespace binaryTables
 		samples.clear();
 		newSamples.clear();
 
+		std::vector<std::vector<::sampling::mpfr_class> > allInclusionProbabilities;
+		std::vector<boost::numeric::ublas::matrix<sampling::mpfr_class> > allSecondOrderInclusionProbabilities;
+
 		varianceGraph varianceEstimationGraph;
 		std::vector<std::vector<int> > graphVertices(nRows * nColumns);
 		varianceGraph::vertex_descriptor rootVertex = boost::add_vertex(varianceEstimationGraph);
@@ -90,6 +115,7 @@ namespace binaryTables
 
 		conditionalPoisson::computeExponentialParameters(cpSamplingArgs, nColumns, initialRowSums.begin(), initialRowSums.end());
 		conditionalPoisson::calculateExpNormalisingConstants(cpSamplingArgs);
+
 		mpfr_class selectionProb;
 		if(initialRowSums[0] == 0)
 		{
@@ -119,19 +145,29 @@ namespace binaryTables
 			newParticle.skipped = 1;
 			newParticle.importanceDensity = 1 - selectionProb;
 			newParticle.weight = 1;
-			newParticle.trueDensity = 1;
+			newParticle.trueDensity = 0.5;
 			newParticle.totalRemaining = totalOnes;
 			newParticle.expNormalisingConstants = initialExpNormalisingConstantData;
 			newParticle.expExponentialParameters = initialExpExponentialParameters;
-			newParticle.parentIndex = -1;
+			newParticle.parentIndexWithinDesign = -1;
+			newParticle.indexWithinDesign = 0;
 			samples.emplace_back(std::move(newParticle));
 
 			varianceGraph::vertex_descriptor firstVertex = boost::add_vertex(varianceEstimationGraph);
 			varianceGraphVertex& firstVertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, firstVertex);
 			firstVertexInfo.samplingStage = 0;
 			firstVertexInfo.indexWithinDesign = firstVertexInfo.indexWithinSelected = 0;
+			firstVertexInfo.trueDensity = 0.5;
 			graphVertices[0].push_back((int)firstVertex);
 			boost::add_edge(rootVertex, firstVertex, varianceEstimationGraph);
+
+			//Specify inclusion probabilities and second order inclusion probabilities
+			{
+				std::vector<::sampling::mpfr_class> inclusion(1, 1.0);
+				allInclusionProbabilities.emplace_back(std::move(inclusion));
+				boost::numeric::ublas::matrix<sampling::mpfr_class> secondOrder(1, 1, 1);
+				allSecondOrderInclusionProbabilities.emplace_back(std::move(secondOrder));
+			}
 		}
 		//In this case we *must* have a 1 in the first entry
 		else if(initialRowSums[0] == (int)nColumns)
@@ -142,11 +178,12 @@ namespace binaryTables
 			newParticle.skipped = 1;
 			newParticle.importanceDensity = selectionProb;
 			newParticle.weight = 1;
-			newParticle.trueDensity = 1;
+			newParticle.trueDensity = 0.5;
 			newParticle.totalRemaining = totalOnes - 1;
 			newParticle.expNormalisingConstants = initialExpNormalisingConstantData;
 			newParticle.expExponentialParameters = initialExpExponentialParameters;
-			newParticle.parentIndex = -1;
+			newParticle.parentIndexWithinDesign = -1;
+			newParticle.indexWithinDesign = 0;
 			samples.emplace_back(std::move(newParticle));
 			sampleRowSums[0]--;
 
@@ -154,8 +191,17 @@ namespace binaryTables
 			varianceGraphVertex& firstVertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, firstVertex);
 			firstVertexInfo.samplingStage = 0;
 			firstVertexInfo.indexWithinDesign = firstVertexInfo.indexWithinSelected = 0;
+			firstVertexInfo.trueDensity = 0.5;
 			graphVertices[0].push_back((int)firstVertex);
 			boost::add_edge(rootVertex, firstVertex, varianceEstimationGraph);
+
+			//Specify inclusion probabilities and second order inclusion probabilities
+			{
+				std::vector<::sampling::mpfr_class> inclusion(1, 1.0);
+				allInclusionProbabilities.emplace_back(std::move(inclusion));
+				boost::numeric::ublas::matrix<sampling::mpfr_class> secondOrder(1, 1, 1);
+				allSecondOrderInclusionProbabilities.emplace_back(std::move(secondOrder));
+			}
 		}
 		else
 		{
@@ -167,11 +213,12 @@ namespace binaryTables
 			firstParticle.skipped = 0;
 			firstParticle.importanceDensity = selectionProb;
 			firstParticle.weight = 1;
-			firstParticle.trueDensity = 1;
+			firstParticle.trueDensity = 0.5;
 			firstParticle.totalRemaining = totalOnes - 1;
 			firstParticle.expNormalisingConstants = initialExpNormalisingConstantData;
 			firstParticle.expExponentialParameters = initialExpExponentialParameters;
-			firstParticle.parentIndex = -1;
+			firstParticle.parentIndexWithinDesign = -1;
+			firstParticle.indexWithinDesign = 0;
 			samples.emplace_back(std::move(firstParticle));
 
 			std::copy(initialRowSums.begin(), initialRowSums.end(), sampleRowSums.begin() + nRows);
@@ -180,26 +227,37 @@ namespace binaryTables
 			secondParticle.skipped = 0;
 			secondParticle.importanceDensity = 1 - selectionProb;
 			secondParticle.weight = 1;
-			secondParticle.trueDensity = 1;
+			secondParticle.trueDensity = 0.5;
 			secondParticle.totalRemaining = totalOnes;
 			secondParticle.expNormalisingConstants = initialExpNormalisingConstantData;
 			secondParticle.expExponentialParameters = initialExpExponentialParameters;
-			secondParticle.parentIndex = -1;
+			secondParticle.parentIndexWithinDesign = -1;
+			secondParticle.indexWithinDesign = 1;
 			samples.emplace_back(std::move(secondParticle));
 
 			varianceGraph::vertex_descriptor firstVertex = boost::add_vertex(varianceEstimationGraph);
 			varianceGraphVertex& firstVertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, firstVertex);
 			firstVertexInfo.samplingStage = 0;
 			firstVertexInfo.indexWithinDesign = firstVertexInfo.indexWithinSelected = 0;
+			firstVertexInfo.trueDensity = 0.5;
 			graphVertices[0].push_back((int)firstVertex);
 			boost::add_edge(rootVertex, firstVertex, varianceEstimationGraph);
 
 			varianceGraph::vertex_descriptor secondVertex = boost::add_vertex(varianceEstimationGraph);
 			varianceGraphVertex& secondVertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, secondVertex);
 			secondVertexInfo.samplingStage = 0;
-			secondVertexInfo.indexWithinDesign = secondVertexInfo.indexWithinSelected = 0;
+			secondVertexInfo.indexWithinDesign = secondVertexInfo.indexWithinSelected = 1;
+			secondVertexInfo.trueDensity = 0.5;
 			graphVertices[0].push_back((int)secondVertex);
 			boost::add_edge(rootVertex, secondVertex, varianceEstimationGraph);
+
+			//Specify inclusion probabilities and second order inclusion probabilities
+			{
+				std::vector<::sampling::mpfr_class> inclusion(2, 1.0);
+				allInclusionProbabilities.emplace_back(std::move(inclusion));
+				boost::numeric::ublas::matrix<sampling::mpfr_class> secondOrder(2, 2, 1);
+				allSecondOrderInclusionProbabilities.emplace_back(std::move(secondOrder));
+			}
 		}
 		for(std::size_t i = 0; i < samples.size(); i++)
 		{
@@ -228,24 +286,44 @@ namespace binaryTables
 				//organise the vector of possibilities (choicesUp, choicesDown) for the next step. 
 				for(std::size_t i = 0; i < samples.size(); i++)
 				{
+					bool upAllowed = true, downAllowed = true;
+					if(row == (int)nRows - 1 && column != (int)nColumns - 1)
+					{
+						//Use the Gayle Ryser test to check if we should continue
+						gayleRyserTestWorking.sortedSums1.clear();
+						gayleRyserTestWorking.sortedSums2.clear();
+						gayleRyserTestWorking.sortedSums1.insert(gayleRyserTestWorking.sortedSums1.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+						gayleRyserTestWorking.sortedSums2.insert(gayleRyserTestWorking.sortedSums2.begin(), initialColumnSums.begin(), initialColumnSums.end());
+						downAllowed = GayleRyserTest(gayleRyserTestWorking.sortedSums2, gayleRyserTestWorking.sortedSums1, column+1, gayleRyserTestWorking);
+
+						if(sampleRowSums[i*nRows + row] > 0)
+						{
+							gayleRyserTestWorking.sortedSums1.clear();
+							gayleRyserTestWorking.sortedSums2.clear();
+							gayleRyserTestWorking.sortedSums1.insert(gayleRyserTestWorking.sortedSums1.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+							gayleRyserTestWorking.sortedSums2.insert(gayleRyserTestWorking.sortedSums2.begin(), initialColumnSums.begin(), initialColumnSums.end());
+							gayleRyserTestWorking.sortedSums1[row]--;
+							upAllowed = GayleRyserTest(gayleRyserTestWorking.sortedSums2, gayleRyserTestWorking.sortedSums1, column+1, gayleRyserTestWorking);
+						}
+					}
 					if(sampleRowSums[i*nRows + row] == 0)
 					{
-						if(samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
+						if(downAllowed && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
 					}
 					else if(sampleRowSums[i*nRows + row] == (int)nColumns - column)
 					{
-						if(samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
+						if(upAllowed && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
 					}
 					else
 					{
 						if(samples[i].deterministicInclusion[row])
 						{
-							if(samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
+							if(upAllowed && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
 						}
 						else
 						{
-							if(samples[i].columnSum + samples[i].nRemainingDeterministic + 1 <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
-							if(samples[i].columnSum + (int)nRows - row - 1 - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
+							if(upAllowed && samples[i].columnSum + samples[i].nRemainingDeterministic + 1 <= initialColumnSums[column] && samples[i].columnSum + (int)nRows - row - samples[i].nRemainingZeros >= initialColumnSums[column]) choicesUp.push_back((int)i);
+							if(downAllowed && samples[i].columnSum + (int)nRows - row - 1 - samples[i].nRemainingZeros >= initialColumnSums[column] && samples[i].columnSum + samples[i].nRemainingDeterministic <= initialColumnSums[column]) choicesDown.push_back((int)i);
 						}
 					}
 				}
@@ -285,7 +363,7 @@ namespace binaryTables
 						currentNewSample.skipped = newSkipped;
 						currentNewSample.nRemainingZeros = parentSample.nRemainingZeros;
 						currentNewSample.nRemainingDeterministic = newDeterministic;
-						currentNewSample.parentIndex = parentIndex;
+						currentNewSample.parentIndexWithinDesign = parentSample.indexWithinDesign;
 						currentNewSample.deterministicInclusion = parentSample.deterministicInclusion;
 						newSamples.emplace_back(std::move(currentNewSample));
 						outputCounter++;
@@ -320,7 +398,7 @@ namespace binaryTables
 						currentNewSample.skipped = newSkipped;
 						currentNewSample.nRemainingZeros = parentSample.nRemainingZeros;
 						currentNewSample.nRemainingDeterministic = parentSample.nRemainingDeterministic;
-						currentNewSample.parentIndex = parentIndex;
+						currentNewSample.parentIndexWithinDesign = parentSample.indexWithinDesign;
 						if(newSampleRowSums[outputCounter * nRows + row] == 0) currentNewSample.nRemainingZeros--;
 						currentNewSample.deterministicInclusion = parentSample.deterministicInclusion;
 						newSamples.emplace_back(std::move(currentNewSample));
@@ -351,7 +429,7 @@ namespace binaryTables
 									newSamples[i].importanceDensity += newSamples[j].importanceDensity;
 									newSamples[i].trueDensity += newSamples[j].trueDensity;
 									alreadySelected[j] = true;
-									boost::add_edge(previousGraphVertices[newSamples[j].parentIndex], newVertex, varianceEstimationGraph);
+									boost::add_edge(previousGraphVertices[newSamples[j].parentIndexWithinDesign], newVertex, varianceEstimationGraph);
 								}
 							}
 							std::copy(newSampleRowSums.begin() + i*nRows, newSampleRowSums.begin() + (i+1)*nRows, sampleRowSums.begin() + samples.size()*nRows);
@@ -360,8 +438,9 @@ namespace binaryTables
 							newVertexInfo.samplingStage = doneSteps;
 							newVertexInfo.indexWithinDesign = (int)samples.size();
 							newVertexInfo.indexWithinSelected = -1;
+							newVertexInfo.trueDensity = newSamples[i].trueDensity;
 							currentGraphVertices.push_back((int)newVertex);
-							boost::add_edge(previousGraphVertices[newSamples[i].parentIndex], newVertex, varianceEstimationGraph);
+							boost::add_edge(previousGraphVertices[newSamples[i].parentIndexWithinDesign], newVertex, varianceEstimationGraph);
 							samples.push_back(std::move(newSamples[i]));
 						}
 					}
@@ -373,6 +452,14 @@ namespace binaryTables
 						int vertex = currentGraphVertices[i];
 						varianceGraphVertex& vertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, vertex);
 						vertexInfo.indexWithinSelected = i;
+						samples[i].indexWithinDesign = i;
+					}
+					//Specify inclusion probabilities and second order inclusion probabilities
+					{
+						std::vector<::sampling::mpfr_class> inclusion(samples.size(), 1.0);
+						allInclusionProbabilities.emplace_back(std::move(inclusion));
+						boost::numeric::ublas::matrix<sampling::mpfr_class> secondOrder(samples.size(), samples.size(), 1);
+						allSecondOrderInclusionProbabilities.emplace_back(std::move(secondOrder));
 					}
 				}
 				else
@@ -380,11 +467,11 @@ namespace binaryTables
 					args.samplingArgs.weights.clear();
 					args.samplingArgs.n = n;
 					newSamples.clear();
-					mpfr_class sumWeights = 0;
-					for(std::size_t i = 0; i < samples.size(); i++) sumWeights += samples[i].weight;
+					mpfr_class sumImportanceDensities = 0;
+					for(std::size_t i = 0; i < samples.size(); i++) sumImportanceDensities += samples[i].importanceDensity;
 					for(std::size_t i = 0; i < samples.size(); i++)
 					{
-						args.samplingArgs.weights.push_back(boost::multiprecision::min(n * samples[i].weight / sumWeights, mpfr_class(1)));
+						args.samplingArgs.weights.push_back(boost::multiprecision::min(n * samples[i].importanceDensity / sumImportanceDensities, mpfr_class(1)));
 					}
 					conditionalPoissonSequential(args.samplingArgs, args.randomSource);
 					for(std::size_t i = 0; i < n; i++)
@@ -397,11 +484,17 @@ namespace binaryTables
 						newSamples.emplace_back(std::move(parentSample));
 						newSamples.back().weight /= inclusionProbability;
 						newSamples.back().importanceDensity /= inclusionProbability;
+						newSamples.back().indexWithinDesign = selected;
 
 						int vertex = currentGraphVertices[selected];
 						varianceGraphVertex& vertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, vertex);
 						vertexInfo.indexWithinSelected = i;
 					}
+					boost::numeric::ublas::matrix<sampling::mpfr_class> secondOrder(samples.size(), samples.size(), 0);
+					sampling::conditionalPoissonSecondOrderInclusionProbabilities(args.samplingArgs, args.samplingArgs.inclusionProbabilities, secondOrder);
+					allInclusionProbabilities.emplace_back(std::move(args.samplingArgs.inclusionProbabilities));
+					allSecondOrderInclusionProbabilities.emplace_back(std::move(secondOrder));
+
 					newSamples.swap(samples);
 					newSampleRowSums.swap(sampleRowSums);
 				}
@@ -411,55 +504,25 @@ namespace binaryTables
 			{
 				for(std::size_t i = 0; i < samples.size(); i++)
 				{
-					bool shouldRemove = false;
-					//This throws an exception if there is no possible sample, in which case the sample is removed. 
-					try
-					{
-						withoutReplacementMergingWithVarianceSample& currentSample = samples[i];
+					withoutReplacementMergingWithVarianceSample& currentSample = samples[i];
 
-						//Use the Gayle Ryser test to check if we should continue
-						gayleRyserTestWorking.sortedSums1.clear();
-						gayleRyserTestWorking.sortedSums2.clear();
-						gayleRyserTestWorking.sortedSums1.insert(gayleRyserTestWorking.sortedSums1.begin(), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
-						gayleRyserTestWorking.sortedSums2.insert(gayleRyserTestWorking.sortedSums2.begin(), initialColumnSums.begin(), initialColumnSums.end());
-						if(!GayleRyserTest(gayleRyserTestWorking.sortedSums2, gayleRyserTestWorking.sortedSums1, column+1, gayleRyserTestWorking))
-						{
-							shouldRemove = true;
-							goto testRemove;
-						}
-						currentSample.columnSum = 0;
-						//Reset the inclusion probabilities for the conditional Poisson sampling
-						cpSamplingArgs.n = initialColumnSums[column+1];
-						currentSample.nRemainingDeterministic = 0;
-						currentSample.nRemainingZeros = 0;
-						conditionalPoisson::conditionalPoissonBase(cpSamplingArgs, sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows, nColumns - (column + 1), currentSample.nRemainingDeterministic, currentSample.nRemainingZeros);
-						conditionalPoisson::computeExponentialParameters(cpSamplingArgs, nColumns - (column + 1), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
-						conditionalPoisson::calculateExpNormalisingConstants(cpSamplingArgs);
+					currentSample.columnSum = 0;
+					//Reset the inclusion probabilities for the conditional Poisson sampling
+					cpSamplingArgs.n = initialColumnSums[column+1];
+					currentSample.nRemainingDeterministic = 0;
+					currentSample.nRemainingZeros = 0;
+					conditionalPoisson::conditionalPoissonBase(cpSamplingArgs, sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows, nColumns - (column + 1), currentSample.nRemainingDeterministic, currentSample.nRemainingZeros);
+					conditionalPoisson::computeExponentialParameters(cpSamplingArgs, nColumns - (column + 1), sampleRowSums.begin() + i*nRows, sampleRowSums.begin() + (i+1)*nRows);
+					conditionalPoisson::calculateExpNormalisingConstants(cpSamplingArgs);
 
-						currentSample.skipped = 0;
-						currentSample.deterministicInclusion = cpSamplingArgs.deterministicInclusion;
-						//Swap in data from cpSamplingArgs to the sample
-						currentSample.expNormalisingConstants.reset(new boost::numeric::ublas::matrix<mpfr_class>());
-						currentSample.expNormalisingConstants->swap(cpSamplingArgs.expNormalisingConstant);
+					currentSample.skipped = 0;
+					currentSample.deterministicInclusion = cpSamplingArgs.deterministicInclusion;
+					//Swap in data from cpSamplingArgs to the sample
+					currentSample.expNormalisingConstants.reset(new boost::numeric::ublas::matrix<mpfr_class>());
+					currentSample.expNormalisingConstants->swap(cpSamplingArgs.expNormalisingConstant);
 
-						currentSample.expExponentialParameters.reset(new std::vector<mpfr_class>());
-						currentSample.expExponentialParameters->swap(cpSamplingArgs.expExponentialParameters);
-					}
-					catch(...)
-					{
-						shouldRemove = true;
-					}
-testRemove:
-					if(shouldRemove)
-					{
-						if(i != samples.size() - 1)
-						{
-							samples[i] = std::move(samples.back());
-							std::copy(sampleRowSums.begin() + (samples.size()-1)*nRows, sampleRowSums.begin() + samples.size() * nRows, sampleRowSums.begin() + i*nRows);
-							i--;
-						}
-						samples.pop_back();
-					}
+					currentSample.expExponentialParameters.reset(new std::vector<mpfr_class>());
+					currentSample.expExponentialParameters->swap(cpSamplingArgs.expExponentialParameters);
 				}
 			}
 			row = 0;
@@ -468,6 +531,115 @@ testRemove:
 		for(std::size_t i = 0; i < samples.size(); i++)
 		{
 			args.estimate += samples[i].weight;
+		}
+		{
+			//Initialize the graph
+			for(int i = 0; i < (int)graphVertices.back().size(); i++)
+			{
+				varianceGraphVertex& vertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, graphVertices.back()[i]);
+				if(vertexInfo.indexWithinSelected != -1) vertexInfo.accumulatedMean = 1;
+			}
+			std::vector<boost::numeric::ublas::matrix<sampling::mpfr_class> > allCovariances(nRows * nColumns);
+			allCovariances[nRows * nColumns - 1].resize(graphVertices[nRows * nColumns - 1].size(), graphVertices[nRows * nColumns - 1].size(), false);
+			
+			for(int time = nRows * nColumns - 2; time >= 0; time--)
+			{
+				const std::vector<sampling::mpfr_class>& currentInclusionProbabilities = allInclusionProbabilities[time+1];
+				const boost::numeric::ublas::matrix<sampling::mpfr_class>& currentSecondOrderInclusionProbabilities = allSecondOrderInclusionProbabilities[time+1];
+
+				allCovariances[time].resize(graphVertices[time].size(), graphVertices[time].size(), false);
+				boost::numeric::ublas::matrix<sampling::mpfr_class>& currentCovariance = allCovariances[time];
+				const boost::numeric::ublas::matrix<sampling::mpfr_class>& previousCovariance = allCovariances[time+1];
+
+				//First estimate the accumulated means
+				for(int particleCounter = 0; particleCounter < (int)graphVertices[time].size(); particleCounter++)
+				{
+					int currentVertex = graphVertices[time][particleCounter];
+					varianceGraphVertex& vertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, currentVertex);
+					vertexInfo.accumulatedMean = 0;
+					varianceGraph::out_edge_iterator current, end;
+					boost::tie(current, end) = boost::out_edges(currentVertex, varianceEstimationGraph);
+					for(; current != end; current++)
+					{
+						int targetVertex = boost::target(*current, varianceEstimationGraph);
+						varianceGraphVertex& targetVertexInfo = boost::get(boost::vertex_name, varianceEstimationGraph, targetVertex);
+						vertexInfo.accumulatedMean += (targetVertexInfo.accumulatedMean) / currentInclusionProbabilities[targetVertexInfo.indexWithinDesign];
+					}
+				}
+				//now actually do the covariance estimation. 
+				for(int particleCounter1 = 0; particleCounter1 < (int)graphVertices[time].size(); particleCounter1++)
+				{
+					int graphVertex1 = graphVertices[time][particleCounter1];
+					varianceGraphVertex& graphVertex1Info = boost::get(boost::vertex_name, varianceEstimationGraph, graphVertex1);
+					for(int particleCounter2 = 0; particleCounter2 < (int)graphVertices[time].size(); particleCounter2++)
+					{
+						int graphVertex2 = graphVertices[time][particleCounter2];
+						varianceGraphVertex& graphVertex2Info = boost::get(boost::vertex_name, varianceEstimationGraph, graphVertex2);
+						sampling::mpfr_class& currentCovarianceValue = currentCovariance(particleCounter1, particleCounter2);
+					
+						varianceGraph::out_edge_iterator current1, end1, current2, end2;
+						boost::tie(current1, end1) = boost::out_edges(graphVertex1, varianceEstimationGraph);
+						for(; current1 != end1; current1++)
+						{
+							int targetVertex1 = boost::target(*current1, varianceEstimationGraph);
+							varianceGraphVertex& targetVertexInfo1 = boost::get(boost::vertex_name, varianceEstimationGraph, targetVertex1);
+							if(targetVertexInfo1.indexWithinSelected != -1)
+							{
+								boost::tie(current2, end2) = boost::out_edges(graphVertex2, varianceEstimationGraph);
+								for(; current2 != end2; current2++)
+								{
+									int targetVertex2 = boost::target(*current2, varianceEstimationGraph);
+									varianceGraphVertex& targetVertexInfo2 = boost::get(boost::vertex_name, varianceEstimationGraph, targetVertex2);
+									if(targetVertexInfo2.indexWithinSelected != -1)
+									{
+										sampling::mpfr_class inclusionProduct = currentInclusionProbabilities[targetVertexInfo1.indexWithinDesign] * currentInclusionProbabilities[targetVertexInfo2.indexWithinDesign];
+										if(targetVertex1 == targetVertex2)
+										{
+											currentCovarianceValue += ((currentInclusionProbabilities[targetVertexInfo1.indexWithinDesign] - inclusionProduct) * targetVertexInfo1.accumulatedMean * targetVertexInfo2.accumulatedMean * graphVertex1Info.trueDensity * graphVertex2Info.trueDensity / (currentInclusionProbabilities[targetVertexInfo1.indexWithinDesign]*inclusionProduct)) + (previousCovariance(targetVertexInfo1.indexWithinSelected, targetVertexInfo2.indexWithinSelected) / (currentInclusionProbabilities[targetVertexInfo1.indexWithinDesign])) * (graphVertex1Info.trueDensity / targetVertexInfo1.trueDensity) * (graphVertex2Info.trueDensity / targetVertexInfo2.trueDensity);
+										}
+										else
+										{
+											currentCovarianceValue += ((currentSecondOrderInclusionProbabilities(targetVertexInfo1.indexWithinDesign, targetVertexInfo2.indexWithinDesign) - inclusionProduct) * targetVertexInfo1.accumulatedMean * targetVertexInfo2.accumulatedMean * graphVertex1Info.trueDensity * graphVertex2Info.trueDensity / (currentSecondOrderInclusionProbabilities(targetVertexInfo1.indexWithinDesign, targetVertexInfo2.indexWithinDesign) * inclusionProduct)) + (previousCovariance(targetVertexInfo1.indexWithinSelected, targetVertexInfo2.indexWithinSelected) / (currentSecondOrderInclusionProbabilities(targetVertexInfo1.indexWithinDesign, targetVertexInfo2.indexWithinDesign))) * (graphVertex1Info.trueDensity / targetVertexInfo1.trueDensity) * (graphVertex2Info.trueDensity / targetVertexInfo2.trueDensity);
+										}
+									}
+								}
+							}
+						}
+						if(particleCounter1 == particleCounter2)
+						{
+							graphVertex1Info.V = currentCovarianceValue;
+						}
+					}
+				}
+				//If a variance is zero, the covariances *have* to be zero. 
+				for(int particleCounter1 = 0; particleCounter1 < (int)graphVertices[time].size(); particleCounter1++)
+				{
+					if(currentCovariance(particleCounter1, particleCounter1) == 0)
+					{
+						for(int particleCounter2 = 0; particleCounter2 < (int)graphVertices[time].size(); particleCounter2++)
+						{
+							currentCovariance(particleCounter1, particleCounter2) = currentCovariance(particleCounter2, particleCounter1) = 0;
+						}
+					}
+				}
+			}
+			mpfr_class totalFromGraph = 0;
+			{
+				varianceGraph::out_edge_iterator current, end;
+				boost::tie(current, end) = boost::out_edges(0, varianceEstimationGraph);
+				for(; current != end; current++)
+				{
+					int targetVertex = boost::target(*current, varianceEstimationGraph);
+					totalFromGraph += boost::get(boost::vertex_name, varianceEstimationGraph, targetVertex).accumulatedMean;
+				}
+			}
+			sampling::mpfr_class totalCovarianceFromGraph = allCovariances[0](0, 0) + allCovariances[0](1, 0) + allCovariances[0](0, 1) + allCovariances[0](1, 1);
+			args.varianceEstimate = totalCovarianceFromGraph;
+		}
+		{
+			std::ofstream file("graph.dot");
+			vertexPropertyWriter vp(varianceEstimationGraph);
+			boost::write_graphviz(file, varianceEstimationGraph, vp);
 		}
 	}
 }

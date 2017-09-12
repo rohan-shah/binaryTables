@@ -26,7 +26,8 @@ namespace binaryTables
 		args.randomSource.seed(seed);
 		withoutReplacementMergingWithVariance(args);
 		std::string estimate_str = args.estimate.str();
-		return Rcpp::wrap(estimate_str);
+		std::string varianceEstimate_str = args.varianceEstimate.str();
+		return Rcpp::List::create(Rcpp::Named("estimate") = Rcpp::wrap(estimate_str), Rcpp::Named("varianceEstimate") = Rcpp::wrap(varianceEstimate_str));
 	END_RCPP
 	}
 }
